@@ -1,0 +1,111 @@
+/* Botão flutuante ARRASTÁVEL do CallCenter Tools */
+#cctools-fab{
+  position:fixed;
+  left:10px;
+  top:38%;
+  z-index:2147483647;
+  font-family:"Segoe UI", Arial, sans-serif;
+}
+/* Esconde o botão flutuante inteiro (não só o menu) quando o modo é barra */
+#cctools-fab.fab-oculto{ display:none !important; }
+#cctools-fab #cctools-fab-btn{
+  width:40px;
+  height:40px;
+  border:none;
+  border-radius:11px;
+  overflow:hidden;
+  cursor:grab;
+  background:transparent;
+  padding:0;
+  box-shadow:0 3px 12px rgba(0,0,0,.45);
+  transition: filter .15s ease, transform .15s ease;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+}
+#cctools-fab #cctools-fab-btn img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  border-radius:11px;
+  pointer-events:none;
+}
+#cctools-fab #cctools-fab-btn:hover{
+  filter:brightness(1.15);
+  transform:scale(1.06);
+}
+#cctools-fab #cctools-fab-btn:active{
+  cursor:grabbing;
+  transform:scale(0.97);
+}
+#cctools-fab-menu{
+  position:absolute;
+  left:48px;
+  top:0;
+  width:250px;
+  max-height:75vh;
+  overflow-y:auto;
+  background:linear-gradient(160deg, #3d1f6b, #22103f);
+  border:1px solid #6c46b5;
+  border-radius:14px;
+  padding:10px;
+  box-shadow:0 16px 52px rgba(0,0,0,.6);
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  color:#f3ebff;
+}
+#cctools-fab-menu.fab-oculto{ display:none !important; }
+#cctools-fab-menu .fab-titulo{
+  font-size:12.5px;
+  font-weight:700;
+  text-align:center;
+  padding-bottom:4px;
+  color:#f3ebff;
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
+#cctools-fab-menu .fab-acao{
+  background:rgba(255,255,255,.07);
+  color:#f3ebff;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:9px;
+  padding:8px 10px;
+  font-size:12.5px;
+  text-align:left;
+  cursor:pointer;
+  transition: background .12s ease, transform .1s ease;
+}
+#cctools-fab-menu .fab-acao:hover{
+  background:#42d3a5;
+  color:#08281f;
+  transform:translateX(2px);
+}
+#cctools-fab-menu .fab-divisoria{
+  height:1px;
+  background:rgba(255,255,255,.12);
+  margin:3px 2px;
+}
+#cctools-fab-menu .fab-sub{ display:flex; flex-direction:column; gap:5px; }
+#cctools-fab-menu .fab-sub.fab-oculto{ display:none !important; }
+#cctools-fab-menu .fab-sub .fab-acao{ padding-left:18px; }
+#cctools-fab-menu .fab-volume{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:#f3ebff;
+  font-size:12px;
+  padding:2px 4px;
+}
+#cctools-fab-menu .fab-volume input{
+  flex:1;
+  accent-color:#45d8b7;
+}
+#cctools-fab-menu .fab-status{
+  color:#d1d5db;
+  font-size:10.5px;
+  min-height:12px;
+  text-align:center;
+  line-height:1.3;
+  padding-top:2px;
+}

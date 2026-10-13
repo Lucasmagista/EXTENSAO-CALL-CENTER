@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Tropa do Leleo</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  body{
+    margin:0;
+    width:250px;
+    padding:16px;
+    background:
+      linear-gradient(rgba(45,11,78,0.78), rgba(45,11,78,0.78)),
+      url('assets/background.webp') center center / cover no-repeat,
+      var(--bg1);
+    font-family: "Segoe UI", Arial, sans-serif;
+    color:var(--text);
+  }
+  h1{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    font-size:14px;
+    margin:0 0 12px;
+    text-align:center;
+    font-weight:600;
+    letter-spacing:.3px;
+  }
+  h1 .titulo{ flex:1; text-align:center; }
+  #btnAbrirConfig{
+    width:32px;
+    height:32px;
+    border-radius:var(--raio-pequeno);
+    background:rgba(0,0,0,.28);
+    border:1px solid var(--border);
+    color:var(--text);
+    font-size:15px;
+    cursor:pointer;
+    margin:0;
+    padding:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+  #btnAbrirConfig:hover{ background:var(--accent); color:#08281f; }
+  button{
+    display:block;
+    width:100%;
+    padding:10px 12px;
+    margin-bottom:10px;
+    background:linear-gradient(135deg, var(--btn), var(--btn-hover));
+    color:#0c2b23;
+    border:none;
+    border-radius:var(--raio);
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition: filter .15s ease, transform .1s ease;
+  }
+  button:hover{ filter:brightness(1.08); }
+  button:active{ transform: scale(0.98); }
+  .volume-box{
+    margin-top:2px;
+    padding:8px 4px 2px;
+  }
+  .volume-box label{
+    display:block;
+    font-size:12px;
+    margin-bottom:6px;
+    text-align:center;
+  }
+  #rangeVolume{
+    width:100%;
+    accent-color:var(--btn);
+    cursor:pointer;
+  }
+  #status{
+    font-size:11px;
+    text-align:center;
+    min-height:14px;
+    margin-top:4px;
+    opacity:.85;
+  }
+  /* Cabeçalho das telas internas */
+  .cabecalho-tela{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:12px;
+    font-size:13px;
+    font-weight:600;
+  }
+  .link-voltar{
+    cursor:pointer;
+    font-size:14px;
+    font-weight:700;
+    color:var(--text);
+  }
+  .link-voltar:hover{ color:var(--accent); }
+  /* Tela de configurações */
+  .bloco-config{ margin-bottom:14px; }
+  .titulo-bloco{
+    display:block;
+    font-size:12px;
+    font-weight:600;
+    margin-bottom:8px;
+    opacity:.9;
+  }
+  .modo-cards{ display:flex; gap:6px; }
+  .modo-card{
+    flex:1;
+    margin-bottom:0 !important;
+    padding:10px 4px !important;
+    background:rgba(0,0,0,.28);
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:var(--raio-pequeno);
+    font-size:11px;
+    font-weight:600;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    transition: background .12s ease, border-color .12s ease;
+  }
+  .modo-card:hover{ filter:none; background:rgba(255,255,255,.08); }
+  .modo-card span{ font-size:10.5px; line-height:1.2; }
+  .modo-card.modo-ativo{
+    background:var(--accent);
+    color:#08281f;
+    border-color:var(--accent);
+  }
+  .modo-dica{
+    font-size:10.5px;
+    opacity:.75;
+    margin-top:6px;
+    line-height:1.35;
+  }
+  .linha-site{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-bottom:6px;
+  }
+  .linha-site .nome-site{
+    flex:1;
+    font-size:11px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .linha-site select{
+    width:118px;
+    padding:5px 4px;
+    background:rgba(0,0,0,.28);
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:var(--raio-pequeno);
+    font-size:10.5px;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .linha-site select:focus{ border-color:var(--accent); }
+  footer{
+    margin-top:14px;
+    text-align:center;
+    font-size:10px;
+    opacity:.6;
+  }
+</style>
+</head>
+<body>
+  <h1><span class="titulo">Call Center Tools</span><button id="btnAbrirConfig" type="button" title="Configurações">⚙️</button></h1>
+
+  <!-- ==================== TELA PRINCIPAL ==================== -->
+  <div id="tela-principal">
+   <button id="btnProx">Enviar "prox"</button>
+<button id="btnCheck">Enviar ✅</button>
+<button id="btn-menu-relatos-mensagens">Relatos / Mensagens</button>
+<button id="btn-menu-links">Links</button>
+<button id="btnHuawei">Configurar x6</button>
+<button id="btnSenhaWifi">Senha Wi-Fi x6</button>
+<button id="btnSnippets">📝 Snippets</button>
+<div class="volume-box">
+  <label for="rangeVolume">🔊 Volume do áudio: <span id="volumeValor">70%</span></label>
+  <input type="range" id="rangeVolume" min="0" max="100" step="5" value="70">
+</div>
+<div class="volume-box">
+  <label id="siteTexto" style="margin-bottom: 4px;">Verificando site atual...</label>
+  <button id="btnPermitirSite" class="oculto" style="margin-bottom: 0;">Permitir snippets neste site</button>
+  <button id="btnRemoverSite" class="oculto" style="margin-bottom: 0;">Remover snippets deste site</button>
+</div>
+</div>
+
+  <!-- ==================== TELA DE CONFIGURAÇÕES ==================== -->
+  <div id="tela-config" class="oculto">
+    <div class="cabecalho-tela">
+      <span id="btn-voltar-config" class="link-voltar">⬅ Voltar</span>
+      <span>Configurações</span>
+    </div>
+
+    <div class="bloco-config">
+      <label class="titulo-bloco">Forma de acesso (padrão)</label>
+      <div class="modo-cards">
+        <button class="modo-card" data-modo="flutuante" type="button">🧩<span>Flutuante</span></button>
+        <button class="modo-card" data-modo="lateral" type="button">📐<span>Barra lateral</span></button>
+        <button class="modo-card" data-modo="ambos" type="button">🔀<span>Ambos</span></button>
+      </div>
+      <div id="padraoDica" class="modo-dica"></div>
+    </div>
+
+    <div class="bloco-config">
+      <label class="titulo-bloco">Forma por site</label>
+      <div id="listaModoPorSite"></div>
+      <div class="modo-dica">Sites sem regra própria usam o padrão acima. A troca aplica na hora, sem recarregar a página.</div>
+    </div>
+
+    <div class="bloco-config">
+      <button id="btnResetarPosicao" class="btn-fantasma" type="button" style="margin-bottom:0;">🧭 Restaurar posição do botão</button>
+    </div>
+  </div>
+
+  <!-- ==================== TELA RELATOS / MENSAGENS ==================== -->
+<div id="tela-secundaria" class="oculto">
+    <div class="cabecalho-tela">
+        <span id="btn-voltar" class="link-voltar">⬅ Voltar</span>
+        <span>Escolha a opção:</span>
+    </div>
+    <button id="btn-relatos">Relatos</button>
+    <button id="btn-mensagens">Mensagens</button>
+</div>
+
+  <!-- ==================== TELA LINKS ==================== -->
+<div id="tela-links" class="oculto">
+    <div class="cabecalho-tela">
+        <span id="btn-voltar-links" class="link-voltar">⬅ Voltar</span>
+        <span>Links:</span>
+    </div>
+    <div id="lista-links"></div>
+</div>
+
+  <div id="status"></div>
+<div style="text-align: center; margin: 15px 0;">
+    <img src="assets/logo.png" alt="CallCenter Tools" style="max-width: 120px; height: auto;">
+</div>
+  <div class="footer" style="text-align: center; font-size: 12px; color: #fff;">
+    <p>Criado por Mometto e Diogo — Magista</p>
+</div>
+  <script src="popup.js"></script>
+</body>
+</html>

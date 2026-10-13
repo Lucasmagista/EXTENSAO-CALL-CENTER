@@ -1,0 +1,67 @@
+/* ==========================================
+   Design system compartilhado
+   (popup, barra lateral e página de snippets)
+   ========================================== */
+:root{
+  --bg1: #2d0b4e;
+  --bg2: #7b2ff7;
+  --btn: #45d8b7;
+  --btn-hover: #42a5cc;
+  --text: #f3ebff;
+  --panel: linear-gradient(145deg, #4a2c82, #29154f);
+  --border: #6c46b5;
+  --accent: #42d3a5;
+  --purple: #a88be8;
+  --danger: #f87171;
+  /* Escala única de cantos: tudo usa o mesmo raio */
+  --raio: 12px;
+  --raio-pequeno: 8px;
+}
+
+*{ box-sizing:border-box; }
+
+/* Classe única para mostrar/esconder (substitui style="display:none" inline) */
+.oculto{ display:none !important; }
+
+/* Foco visível padronizado para navegação por teclado */
+:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
+
+/* Botão primário compartilhado (verde→ciano) */
+.btn-comum{
+  display:block;
+  width:100%;
+  padding:10px 14px;
+  margin-bottom:10px;
+  background:linear-gradient(135deg, var(--btn), var(--btn-hover));
+  color:#0c2b23;
+  border:none;
+  border-radius:var(--raio);
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  transition: filter .15s ease, transform .1s ease;
+}
+.btn-comum:hover{ filter:brightness(1.08); }
+.btn-comum:active{ transform:scale(0.98); }
+
+/* Botão fantasma (transparente com borda) */
+.btn-fantasma{
+  background:transparent;
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:var(--raio);
+  padding:8px 13px;
+  font-size:12.5px;
+  font-weight:600;
+  cursor:pointer;
+  transition: all .15s ease;
+  white-space:nowrap;
+}
+.btn-fantasma:hover{
+  background:var(--accent);
+  color:#08281f;
+  border-color:var(--accent);
+}
