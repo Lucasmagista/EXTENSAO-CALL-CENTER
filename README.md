@@ -105,3 +105,6 @@ Esta extensão **não baixa nem executa código de fora do pacote publicado** e 
 
 - Issues: [github.com/lv777x/call-center-tools/issues](https://github.com/lv777x/call-center-tools/issues)
 - Criadores: Mometto e Diogo — Magista
+
+
+https://chromewebstore.google.com/detail/callcenter-tools/acgdpiahfakpindcloiopmelfihkiefa
