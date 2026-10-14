@@ -5,6 +5,23 @@ O formato segue o padrão [Keep a Changelog](https://keepachangelog.com/pt-BR/1.
 
 ---
 
+## [1.19] — 2026-10-13
+
+### Adicionado
+- Tela modal "Senha Wi-Fi x6": os três botões (popup, botão flutuante e barra lateral) agora abrem um modal sobre a página (760×560, fecha no ✕, no fundo escuro ou no ESC) com o conteúdo do arquivo `SENHA WIFI X6.html` (Decodificador de Senha WiFi — Oquei Telecom).
+- `senha-wifi-x6.js`: JavaScript do decodificador (extraído do HTML) executado como content script dentro da modal — dropzone, decodificação AES, tabela com senha/copy e tema claro/escuro funcionam sem depender do CSP da página.
+
+### Alterado
+- O botão deixou de abrir o site externo `oquei-decodificar.lovable.app`; toda a lógica fica no background (handler `mostrarModalSenhaWifi`), compartilhada pelos três botões.
+- O conteúdo é injetado direto na página (`innerHTML`) em vez de iframe: o CSP do WhatsApp (`frame-src` sem `chrome-extension:`) bloqueia molduras da extensão. O CSS do arquivo é reescrito para aplicar apenas dentro do container da modal (`#cc-senha-wifi-corpo`), sem afetar o layout da página.
+- Redesign completo do decodificador (baseado no mockup `decodificador_wifi_oquei_telecom.html`, mas com decodificação real e sem CDNs): selo com o modelo do aparelho (Huawei OptiXstar EG8041X6-10), card de instruções com o caminho passo a passo, dropzone com ícone e estados de hover/arraste, spinner de carregamento, tabela de resultados com coluna "Ação" (copiar) e nome do arquivo no cabeçalho, animações de entrada e estilos 100% autocontidos.
+- Rebranding: ícone e logotipo Alares (`assets/alares-icon.webp` e `assets/Logo-Alares.png`) embutidos como data URI (o CSP das páginas só permite `data:` em `img-src`), rodapé "Ferramenta interna · Alares Internet" e créditos "Desenvolvido por Mometto, Diogo e Magista".
+- Estilos escopados com prefixo `dx-` (ids e classes) para não colidir com CSS/IDs das páginas onde a modal é injetada.
+- Ícone da barra fixada do Chrome trocado: o swoosh Alares do `icons/favicon.ico` foi extraído e gerado em `icons/toolbar16/32/48.png`, usado pelo `action.default_icon` (a arte "Tropa do Call Center" continua no ícone da página de gestão/loja).
+- Foto do popup (tela ao clicar no ícone da barra) trocada pela assinatura branca Alares (`assets/alares.png`), que já era usada só na página de gestão.
+
+---
+
 ## [1.18] — 2026-10-13
 
 ### Removido

@@ -8,7 +8,6 @@
     { nome: "Links", url: "https://docs.google.com/spreadsheets/d/1hdpzDmJ8u1q-0JxcqQIhHcdPtNGa05IfEm-BFl3v3_k/edit?gid=0#gid=0" },
     { nome: "Recados/Roteiro", url: "https://docs.google.com/document/d/1eYtQZxso1gCsfOMilhDBHvlo2P8HBy0iTmlATlNYgRM/edit?tab=t.0" }
   ];
-  var URL_SENHA_WIFI = "https://oquei-decodificar.lovable.app/";
   var CONFIG_KEY = "ccTools_configModos";
   var LEGADO_MODO_KEY = "ccTools_modoAcesso";
 
@@ -65,7 +64,9 @@
         return;
       }
       if (acao === "senha-wifi") {
-        abrirUrl(URL_SENHA_WIFI, mostrarStatus);
+        chrome.runtime.sendMessage({ type: "mostrarModalSenhaWifi" }, function (resp) {
+          avisar(mostrarStatus, resp && resp.ok ? "Senha Wi-Fi aberta!" : (resp && resp.error) || "Abra o chat da empresa para usar esta tela.");
+        });
         return;
       }
       if (acao === "abrir-link" && extra && extra.url) {

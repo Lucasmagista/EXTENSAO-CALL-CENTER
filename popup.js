@@ -120,7 +120,24 @@ document.getElementById("btnHuawei").addEventListener("click", () => {
 });
 
 document.getElementById("btnSenhaWifi").addEventListener("click", () => {
-chrome.tabs.create({ url: "https://oquei-decodificar.lovable.app/" });
+  setStatus("Abrindo senha Wi-Fi...");
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tab = tabs && tabs[0];
+    if (!tab || tab.id == null) {
+      setStatus("Nenhuma aba ativa encontrada.");
+      return;
+    }
+    chrome.runtime.sendMessage({ type: "mostrarModalSenhaWifi", tabId: tab.id }, (resp) => {
+      if (chrome.runtime.lastError || !resp || !resp.ok) {
+        setStatus((resp && resp.error) ||
+          (chrome.runtime.lastError && chrome.runtime.lastError.message) ||
+          "Abra o WhatsApp Web ou o chat da empresa.");
+        setTimeout(() => setStatus(""), 3500);
+        return;
+      }
+      fecharSePopup();
+    });
+  });
 });
 
 // ==========================================

@@ -32,7 +32,7 @@ Cada site pode ter a forma de acesso própria (Flutuante, Barra lateral ou Ambos
 
 ### 🛠 Outras ferramentas
 - Configuração de ramal Huawei x6 pelo popup.
-- Senha de Wi-Fi com decodificador (aba externa).
+- Senha Wi-Fi do X6 em tela modal (conteúdo do arquivo `SENHA WIFI X6.html`).
 - Lista de links úteis (ramais, planilhas, roteiros).
 
 ## Sites suportados

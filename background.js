@@ -742,3 +742,117 @@ chrome.runtime.onInstalled.addListener(() => {
   sincronizarScriptsSnippetsDinamicos();
   migrarConfigModos();
 });
+
+// ==========================================
+// MODAL "SENHA WI-FI X6" (conteúdo de SENHA WIFI X6.html)
+// ==========================================
+// Usada pelos três botões "Senha Wi-Fi x6" (popup, botão flutuante e barra
+// lateral). O HTML é injetado direto na página (innerHTML), sem iframe: o CSP
+// do WhatsApp (frame-src) bloqueia molduras chrome-extension:, mas permite
+// <style> com 'unsafe-inline'. O CSS do arquivo é reescrito para valer só
+// dentro do container da modal e o JavaScript (senha-wifi-x6.js) roda como
+// content script, imune ao CSP da página.
+const SENHA_WIFI_ARQUIVO = "SENHA WIFI X6.html";
+const SENHA_WIFI_JS = "senha-wifi-x6.js";
+
+// Regras de `body` do arquivo passam a mirar o container da modal (senão
+// repaginariam a página inteira) e o <script> inerte é removido — a ligação
+// dos eventos vem do content script executado logo depois.
+function prepararHtmlSenhaWifi(html) {
+  return html
+    .replace(/<script[^>]*src=["']senha-wifi-x6\.js["'][^>]*><\/script>\s*/i, "")
+    .replace(/<style>([\s\S]*?)<\/style>/gi, (m, css) =>
+      "<style>" + css
+        .replace(/\bbody\.light\b/g, "#cc-senha-wifi-corpo.light")
+        .replace(/\bbody\b/g, "#cc-senha-wifi-corpo") + "</style>");
+}
+
+// Injetada via chrome.scripting.executeScript — precisa ser autocontida.
+function construirModalSenhaWifi(conteudoHtml) {
+  var ID = "cc-senha-wifi-modal";
+  var antigo = document.getElementById(ID);
+  if (antigo) antigo.parentNode.removeChild(antigo);
+
+  var raiz = document.createElement("div");
+  raiz.id = ID;
+  raiz.style.cssText = "position:fixed;left:0;top:0;right:0;bottom:0;" +
+    "z-index:2147483647;display:flex;align-items:center;justify-content:center;" +
+    "background:rgba(0,0,0,.55);font-family:'Segoe UI',Arial,sans-serif;";
+
+  var cartao = document.createElement("div");
+  cartao.style.cssText = "width:min(760px,94vw);height:min(560px,88vh);" +
+    "background:#fff;border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.45);" +
+    "display:flex;flex-direction:column;overflow:hidden;";
+
+  var cabecalho = document.createElement("div");
+  cabecalho.style.cssText = "display:flex;align-items:center;justify-content:space-between;" +
+    "gap:8px;padding:10px 14px;flex-shrink:0;color:#fff;font-size:14px;font-weight:600;" +
+    "background:linear-gradient(135deg,#2d0b4e,#5b21b6);";
+
+  var titulo = document.createElement("span");
+  titulo.textContent = "\uD83D\uDD11 Senha Wi-Fi x6";
+
+  var btnFechar = document.createElement("button");
+  btnFechar.type = "button";
+  btnFechar.textContent = "\u2715";
+  btnFechar.setAttribute("aria-label", "Fechar");
+  btnFechar.style.cssText = "width:28px;height:28px;border:0;border-radius:6px;" +
+    "background:rgba(255,255,255,.15);color:#fff;font-size:15px;cursor:pointer;line-height:1;";
+
+  var corpo = document.createElement("div");
+  corpo.id = "cc-senha-wifi-corpo";
+  corpo.style.cssText = "flex:1;overflow:auto;min-height:0;background:#0a1420;";
+  corpo.innerHTML = conteudoHtml;
+
+  function aoTeclar(e) {
+    if (e.key === "Escape") fechar();
+  }
+  function fechar() {
+    document.removeEventListener("keydown", aoTeclar, true);
+    if (raiz.parentNode) raiz.parentNode.removeChild(raiz);
+  }
+  btnFechar.addEventListener("click", fechar);
+  raiz.addEventListener("mousedown", function (e) {
+    if (e.target === raiz) fechar(); // clique no fundo escuro
+  });
+  document.addEventListener("keydown", aoTeclar, true);
+
+  cabecalho.appendChild(titulo);
+  cabecalho.appendChild(btnFechar);
+  cartao.appendChild(cabecalho);
+  cartao.appendChild(corpo);
+  raiz.appendChild(cartao);
+  (document.body || document.documentElement).appendChild(raiz);
+}
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message && message.type === "mostrarModalSenhaWifi") {
+    (async () => {
+      try {
+        const tabId = message.tabId != null ? message.tabId : (sender.tab && sender.tab.id);
+        if (tabId == null) return { ok: false, error: "Nenhuma aba ativa encontrada." };
+        let html;
+        try {
+          const resp = await fetch(chrome.runtime.getURL(encodeURIComponent(SENHA_WIFI_ARQUIVO)));
+          if (!resp.ok) throw new Error("HTTP " + resp.status);
+          html = await resp.text();
+        } catch (e) {
+          return { ok: false, error: "Arquivo \"" + SENHA_WIFI_ARQUIVO + "\" não encontrado na extensão." };
+        }
+        await chrome.scripting.executeScript({
+          target: { tabId: tabId },
+          func: construirModalSenhaWifi,
+          args: [prepararHtmlSenhaWifi(html)]
+        });
+        await chrome.scripting.executeScript({
+          target: { tabId: tabId },
+          files: [SENHA_WIFI_JS]
+        });
+        return { ok: true };
+      } catch (e) {
+        return { ok: false, error: "Abra o WhatsApp Web ou o chat da empresa para usar esta tela." };
+      }
+    })().then(sendResponse);
+    return true;
+  }
+});
