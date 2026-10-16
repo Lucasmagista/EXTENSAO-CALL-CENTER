@@ -1,0 +1,5 @@
+# Pacote local: chave do servidor de Zap — NUNCA versionar (repo é público)
+assets/prox-servidor.json
+
+# ZIPs de distribuição
+*.zip

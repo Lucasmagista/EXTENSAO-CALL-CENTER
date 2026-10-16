@@ -45,8 +45,29 @@
     flex-shrink:0;
   }
   #btnAbrirConfig:hover{ background:var(--accent); color:#08281f; }
+  .ico{
+    width:15px;
+    height:15px;
+    flex:0 0 auto;
+    fill:none;
+    stroke:currentColor;
+    stroke-width:2;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    transition:transform .16s ease;
+  }
+  /* Animações de ícone (mesmas do site: pulse, bounce, fade de entrada) */
+  @keyframes cc-ico-pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  @keyframes cc-ico-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+  @keyframes cc-ent{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  button:hover .ico{ transform:scale(1.18); }
+  #btnProxEnviar:hover .ico{ animation:cc-ico-bounce .5s ease infinite; }
+  #icoProxOk:not(.oculto){ animation:cc-ico-pulse 2s ease-in-out infinite; }
   button{
-    display:block;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
     width:100%;
     padding:10px 12px;
     margin-bottom:10px;
@@ -58,6 +79,7 @@
     font-weight:600;
     cursor:pointer;
     transition: filter .15s ease, transform .1s ease;
+    animation:cc-ent .22s ease both;
   }
   button:hover{ filter:brightness(1.08); }
   button:active{ transform: scale(0.98); }
@@ -93,6 +115,9 @@
     font-weight:600;
   }
   .link-voltar{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
     cursor:pointer;
     font-size:14px;
     font-weight:700;
@@ -126,6 +151,7 @@
     transition: background .12s ease, border-color .12s ease;
   }
   .modo-card:hover{ filter:none; background:rgba(255,255,255,.08); }
+  .modo-card .ico{ width:16px; height:16px; }
   .modo-card span{ font-size:10.5px; line-height:1.2; }
   .modo-card.modo-ativo{
     background:var(--accent);
@@ -169,24 +195,91 @@
     font-size:10px;
     opacity:.6;
   }
+  /* Botão dividido do PROX (meio a meio: enviar + configuração) */
+  .btn-split{
+    display:flex;
+    width:100%;
+    margin-bottom:10px;
+  }
+  .btn-split button{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:0;
+    width:auto;
+    white-space:nowrap;
+    overflow:hidden;
+  }
+  #btnProxEnviar{
+    flex:1;
+    min-width:0;
+    border-radius:var(--raio) 0 0 var(--raio);
+    padding:10px 8px;
+  }
+  #btnProxConfig{
+    width:44px !important;
+    flex-shrink:0;
+    border-radius:0 var(--raio) var(--raio) 0;
+    border-left:1px solid rgba(0,0,0,.3);
+    padding:10px 0;
+    font-size:15px;
+  }
+  #btnProxEnviar[data-conectado="1"]{
+    background:linear-gradient(135deg,#3fb84f,#2c9a3d);
+    color:#06240e;
+  }
+  #btnProxEnviar[data-conectado="0"]{
+    background:linear-gradient(135deg,#5a6b7a,#465666);
+    color:#e7edf2;
+  }
+
+  /* Bloco do som de confirmação (escolha de arquivo) */
+  .som-acoes{ display:flex; gap:6px; }
+  .som-acoes button{ width:auto; flex:1; padding:7px 6px !important; font-size:11.5px !important; margin-bottom:0 !important; }
+  .dica-som{ font-size:10.5px; opacity:.7; margin-top:5px; text-align:center; line-height:1.35; }
 </style>
 </head>
 <body>
-  <h1><span class="titulo">Call Center Tools</span><button id="btnAbrirConfig" type="button" title="Configurações">⚙️</button></h1>
+  <!-- Sprite Lucide (mesmos SVGs do animateicons.in/icons/lucide) — usado via <use> -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-message" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+    <symbol id="i-message-circle" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+    <symbol id="i-router" viewBox="0 0 24 24"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6.01 18H6"/><path d="M10.01 18H10"/><path d="M15 10v4"/><path d="M17.84 7.17a4 4 0 0 0-5.66 0"/><path d="M20.66 4.34a8 8 0 0 0-11.31 0"/></symbol>
+    <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.364 18.364a9 9 0 0 0 0-12.728"/></symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+    <symbol id="i-puzzle" viewBox="0 0 24 24"><path d="M15.39 4.39a1 1 0 0 0 1.68-.474 2.5 2.5 0 1 1 3.014 3.015 1 1 0 0 0-.474 1.68l1.683 1.682a2.414 2.414 0 0 1 0 3.414L19.61 15.39a1 1 0 0 1-1.68-.474 2.5 2.5 0 1 0-3.014 3.015 1 1 0 0 1 .474 1.68l-1.683 1.682a2.414 2.414 0 0 1-3.414 0L8.61 19.61a1 1 0 0 0-1.68.474 2.5 2.5 0 1 1-3.014-3.015 1 1 0 0 0 .474-1.68l-1.683-1.682a2.414 2.414 0 0 1 0-3.414L4.39 8.61a1 1 0 0 1 1.68.474 2.5 2.5 0 1 0 3.014-3.015 1 1 0 0 1-.474-1.68l1.683-1.682a2.414 2.414 0 0 1 3.414 0z"/></symbol>
+    <symbol id="i-panel" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M15 3v18"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></symbol>
+    <symbol id="i-crosshair" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="22" x2="18" y1="12" y2="12"/><line x1="6" x2="2" y1="12" y2="12"/><line x1="12" x2="12" y1="6" y2="2"/><line x1="12" x2="12" y1="22" y2="18"/></symbol>
+    <symbol id="i-clipboard" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-lightbulb" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></symbol>
+    <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
+  </defs></svg>
+
+  <h1><span class="titulo">Call Center Tools</span><button id="btnAbrirConfig" type="button" title="Configurações"><svg class="ico" aria-hidden="true"><use href="#i-settings"/></svg></button></h1>
 
   <!-- ==================== TELA PRINCIPAL ==================== -->
   <div id="tela-principal">
-   <button id="btnProx">Enviar "prox"</button>
-<button id="btnCheck">Enviar ✅</button>
-<button id="btn-menu-relatos-mensagens">Relatos / Mensagens</button>
-<button id="btn-menu-links">Links</button>
-<button id="btnHuawei">Configurar x6</button>
-<button id="btnSenhaWifi">Senha Wi-Fi x6</button>
-<button id="btnSnippets">📝 Snippets</button>
-<div class="volume-box">
-  <label for="rangeVolume">🔊 Volume do áudio: <span id="volumeValor">70%</span></label>
-  <input type="range" id="rangeVolume" min="0" max="100" step="5" value="70">
-</div>
+   <div class="btn-split" id="btnProxSplit">
+     <button id="btnProxEnviar" type="button" data-conectado="0" title="Enviar PROX no grupo do WhatsApp"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg><span id="lblProxEnviar">Enviar PROX</span><svg class="ico oculto" id="icoProxOk" aria-hidden="true"><use href="#i-check"/></svg></button>
+     <button id="btnProxConfig" type="button" title="Configurar o PROX (conexão e grupo)"><svg class="ico" aria-hidden="true"><use href="#i-sliders"/></svg></button>
+    </div>
+  <button id="btnCheck"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Enviar</button>
+<button id="btn-menu-relatos-mensagens"><svg class="ico" aria-hidden="true"><use href="#i-message"/></svg>Relatos / Mensagens</button>
+<button id="btn-menu-links"><svg class="ico" aria-hidden="true"><use href="#i-link"/></svg>Links</button>
+<button id="btnHuawei"><svg class="ico" aria-hidden="true"><use href="#i-router"/></svg>Configurar x6</button>
+<button id="btnSenhaWifi"><svg class="ico" aria-hidden="true"><use href="#i-wifi"/></svg>Senha Wi-Fi x6</button>
+<button id="btnSnippets"><svg class="ico" aria-hidden="true"><use href="#i-file"/></svg>Snippets</button>
+<button id="btnSugestoes"><svg class="ico" aria-hidden="true"><use href="#i-lightbulb"/></svg>Sugestões</button>
 <div class="volume-box">
   <label id="siteTexto" style="margin-bottom: 4px;">Verificando site atual...</label>
   <button id="btnPermitirSite" class="oculto" style="margin-bottom: 0;">Permitir snippets neste site</button>
@@ -197,18 +290,36 @@
   <!-- ==================== TELA DE CONFIGURAÇÕES ==================== -->
   <div id="tela-config" class="oculto">
     <div class="cabecalho-tela">
-      <span id="btn-voltar-config" class="link-voltar">⬅ Voltar</span>
+      <span id="btn-voltar-config" class="link-voltar"><svg class="ico" aria-hidden="true"><use href="#i-arrow-left"/></svg>Voltar</span>
       <span>Configurações</span>
     </div>
 
     <div class="bloco-config">
       <label class="titulo-bloco">Forma de acesso (padrão)</label>
       <div class="modo-cards">
-        <button class="modo-card" data-modo="flutuante" type="button">🧩<span>Flutuante</span></button>
-        <button class="modo-card" data-modo="lateral" type="button">📐<span>Barra lateral</span></button>
-        <button class="modo-card" data-modo="ambos" type="button">🔀<span>Ambos</span></button>
+        <button class="modo-card" data-modo="flutuante" type="button"><svg class="ico" aria-hidden="true"><use href="#i-puzzle"/></svg><span>Flutuante</span></button>
+        <button class="modo-card" data-modo="lateral" type="button"><svg class="ico" aria-hidden="true"><use href="#i-panel"/></svg><span>Barra lateral</span></button>
+        <button class="modo-card" data-modo="ambos" type="button"><svg class="ico" aria-hidden="true"><use href="#i-grid"/></svg><span>Ambos</span></button>
       </div>
       <div id="padraoDica" class="modo-dica"></div>
+    </div>
+
+    <div class="bloco-config">
+      <label class="titulo-bloco">Volume e som</label>
+      <div class="volume-box">
+        <label for="rangeVolume" title="Volume dos áudios dos snippets e do som de confirmação quando um comando é usado no chat"><svg class="ico" aria-hidden="true" style="vertical-align:-2px"><use href="#i-volume"/></svg> Volume dos sons: <span id="volumeValor">70%</span></label>
+        <input type="range" id="rangeVolume" min="0" max="100" step="5" value="70">
+      </div>
+      <div class="volume-box">
+        <label id="somLabel" title="Som tocado quando um comando é usado no chat — o padrão é um 'ding' gerado na hora; você pode escolher o seu arquivo"><svg class="ico" aria-hidden="true" style="vertical-align:-2px"><use href="#i-music"/></svg> Som de confirmação: <span id="somValor">padrão</span></label>
+        <div class="som-acoes">
+          <button id="btnEscolherSom" type="button" title="Escolher um arquivo de som (MP3, WAV ou OGG) guardado só neste navegador">Trocar…</button>
+          <button id="btnOuvirSom" type="button" title="Ouvir o som atual no volume escolhido">Ouvir</button>
+          <button id="btnSomPadrao" type="button" class="oculto" title="Voltar para o som padrão da extensão">Padrão</button>
+        </div>
+        <input type="file" id="inputSom" accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac,.webm" style="display:none;">
+        <div class="dica-som">MP3, WAV ou OGG até 500 KB — guardado só neste navegador, nunca sai dele.</div>
+      </div>
     </div>
 
     <div class="bloco-config">
@@ -218,14 +329,14 @@
     </div>
 
     <div class="bloco-config">
-      <button id="btnResetarPosicao" class="btn-fantasma" type="button" style="margin-bottom:0;">🧭 Restaurar posição do botão</button>
+      <button id="btnResetarPosicao" class="btn-fantasma" type="button" style="margin-bottom:0;"><svg class="ico" aria-hidden="true"><use href="#i-crosshair"/></svg>Restaurar posição do botão</button>
     </div>
   </div>
 
   <!-- ==================== TELA RELATOS / MENSAGENS ==================== -->
 <div id="tela-secundaria" class="oculto">
     <div class="cabecalho-tela">
-        <span id="btn-voltar" class="link-voltar">⬅ Voltar</span>
+        <span id="btn-voltar" class="link-voltar"><svg class="ico" aria-hidden="true"><use href="#i-arrow-left"/></svg>Voltar</span>
         <span>Escolha a opção:</span>
     </div>
     <button id="btn-relatos">Relatos</button>
@@ -235,7 +346,7 @@
   <!-- ==================== TELA LINKS ==================== -->
 <div id="tela-links" class="oculto">
     <div class="cabecalho-tela">
-        <span id="btn-voltar-links" class="link-voltar">⬅ Voltar</span>
+        <span id="btn-voltar-links" class="link-voltar"><svg class="ico" aria-hidden="true"><use href="#i-arrow-left"/></svg>Voltar</span>
         <span>Links:</span>
     </div>
     <div id="lista-links"></div>
@@ -243,10 +354,12 @@
 
   <div id="status"></div>
 <div style="text-align: center; margin: 15px 0;">
-    <img src="assets/alares.png" alt="Alares" style="max-width: 120px; height: auto;">
+    <a href="https://www.alaresinternet.com.br/" target="_blank" rel="noopener noreferrer" title="Acessar o site da Alares">
+      <img src="assets/alares.png" alt="Alares" style="max-width: 120px; height: auto;">
+    </a>
 </div>
   <div class="footer" style="text-align: center; font-size: 12px; color: #fff;">
-    <p>Criado por Mometto e Diogo — Magista</p>
+    <p>Criado por Mometto e Diogo — <a href="https://www.magista.dev/" target="_blank" rel="noopener noreferrer" style="color:#fff;">Magista</a></p>
 </div>
   <script src="popup.js"></script>
 </body>

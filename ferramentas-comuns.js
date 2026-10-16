@@ -32,10 +32,34 @@
 
   function executar(acao, mostrarStatus, extra) {
     try {
-      if (acao === "prox" || acao === "check") {
-        var msg = acao === "prox" ? "prox" : "\u2705";
-        chrome.runtime.sendMessage({ type: "runFlow", msg: msg, tag: acao }, function (resp) {
+      if (acao === "check") {
+        chrome.runtime.sendMessage({ type: "runFlow", msg: "✅", tag: "check" }, function (resp) {
           avisar(mostrarStatus, resp && resp.ok ? "Comando enviado!" : (resp && resp.error) || "Falha ao enviar.");
+        });
+        return;
+      }
+      if (acao === "prox-enviar") {
+        chrome.runtime.sendMessage({ type: "proxAcao" }, function (resp) {
+          if (resp && resp.abrir) {
+            // Ainda não está pronto (sem chave/QR/grupo): abre a modal de conexão
+            chrome.runtime.sendMessage({ type: "mostrarModalProx" }, function (r2) {
+              avisar(mostrarStatus, r2 && r2.ok
+                ? (resp.error || "Conecte o WhatsApp (QR Code aberto).")
+                : (r2 && r2.error) || (resp && resp.error) || "Abra o chat/WhatsApp para usar esta tela.");
+            });
+            return;
+          }
+          avisar(mostrarStatus, resp && resp.ok
+            ? "PROX enviado para " + resp.grupo + "!"
+            : (resp && resp.error) || "Falha ao enviar.");
+        });
+        return;
+      }
+      if (acao === "prox-config") {
+        chrome.runtime.sendMessage({ type: "mostrarModalProx" }, function (resp) {
+          avisar(mostrarStatus, resp && resp.ok
+            ? "Configuração do PROX aberta."
+            : (resp && resp.error) || "Abra o chat/WhatsApp para usar esta tela.");
         });
         return;
       }

@@ -1,0 +1,648 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>WhatsApp do Suporte</title>
+<style>
+  /* Estilos 100% com prefixo px- (mais .oculto/.visivel locais) — sem regras de
+     body: na injeção da modal qualquer seletor body seria reescrito para o
+     container e poderia esmagar o layout, como aconteceu na modal do X6. */
+  .px-wrap {
+    box-sizing: border-box;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 18px 16px 18px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #e8eefc;
+    --px-bg: #0a1224;
+    --px-painel-a: #111d3c;
+    --px-painel-b: #0c1630;
+    --px-borda: #22345c;
+    --px-borda-forte: #2b406e;
+    --px-azul: #4f8cff;
+    --px-azul-claro: #7cc4ff;
+    --px-suave: #94a3c0;
+    --px-verde: #34d399;
+    --px-ambar: #fbbf24;
+    --px-vermelho: #f87171;
+  }
+  .px-wrap *, .px-wrap *::before, .px-wrap *::after { box-sizing: border-box; }
+
+  .px-etapa { display: none; }
+  .px-etapa.ativa { display: block; }
+
+  /* O styles.css da extensão não acompanha a modal injetada, então as classes
+     .oculto/.visivel (usadas pelo prox-modal.js) precisam existir aqui. */
+  .oculto { display: none !important; }
+  .visivel { display: block !important; }
+
+  .px-ico {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .px-ico.px-ico-grande { width: 42px; height: 42px; color: #34d399; filter: drop-shadow(0 0 10px rgba(52,211,153,.55)); animation: px-pulse-ico 2.4s ease-in-out infinite; }
+  .px-ico.px-ico-titulo { width: 17px; height: 17px; color: var(--px-azul-claro); }
+
+  .px-titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15.5px;
+    font-weight: 700;
+    margin: 0 0 10px;
+    color: #f2f6ff;
+  }
+  .px-texto {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--px-suave);
+    margin: 0 0 12px;
+  }
+  .px-texto strong { color: #dbe6ff; font-weight: 600; }
+  .px-texto code {
+    background: rgba(79,140,255,.12);
+    border: 1px solid var(--px-borda-forte);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 12px;
+    color: #a8c8ff;
+  }
+
+  /* ===== duas colunas: conexão (esq) + grupos (dir) ===== */
+  .px-duas { display: flex; gap: 14px; align-items: stretch; }
+  .px-col {
+    flex: 1 1 0;
+    min-width: 0;
+    background: linear-gradient(180deg, var(--px-painel-a), var(--px-painel-b));
+    border: 1px solid var(--px-borda);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 22px rgba(0,0,0,.28);
+  }
+  @media (max-width: 700px) {
+    .px-duas { flex-direction: column; }
+  }
+
+  .px-campo {
+    width: 100%;
+    padding: 11px 12px;
+    background: #080e1d;
+    border: 1px solid var(--px-borda-forte);
+    border-radius: 9px;
+    color: #e8eefc;
+    font-size: 14px;
+    font-family: inherit;
+    margin-bottom: 10px;
+    outline: none;
+    transition: border-color .12s ease, box-shadow .12s ease;
+  }
+  .px-campo:focus {
+    border-color: var(--px-azul);
+    box-shadow: 0 0 0 3px rgba(79,140,255,.18);
+  }
+  .px-campo::placeholder { color: #5f7194; }
+
+  .px-botao {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 100%;
+    padding: 11px 14px;
+    border: 0;
+    border-radius: 9px;
+    background: linear-gradient(135deg, #4f8cff, #2f6ee0);
+    box-shadow: 0 3px 12px rgba(47,110,224,.32);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: filter .15s ease, transform .1s ease, box-shadow .15s ease;
+  }
+  .px-botao:hover { filter: brightness(1.07); }
+  .px-botao:active { transform: scale(.985); }
+  .px-botao:disabled { opacity: .55; cursor: wait; }
+  .px-botao:focus-visible { outline: 2px solid var(--px-azul-claro); outline-offset: 2px; }
+  .px-botao.px-perigo {
+    background: transparent;
+    border: 1px solid rgba(248,113,113,.5);
+    box-shadow: none;
+    color: #fca5a5;
+  }
+  .px-botao.px-perigo:hover {
+    background: rgba(248,113,113,.12);
+    filter: none;
+  }
+  .px-botao.px-secundario {
+    background: rgba(255,255,255,.06);
+    border: 1px solid var(--px-borda-forte);
+    box-shadow: none;
+    color: #cfdcf6;
+  }
+  .px-botao.px-secundario:hover { background: rgba(255,255,255,.11); filter: none; }
+
+  .px-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    background: none;
+    border: 0;
+    color: var(--px-azul-claro);
+    font-size: 12.5px;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 6px;
+    text-align: center;
+  }
+  .px-link:hover { text-decoration: underline; }
+
+  .px-erro {
+    display: none;
+    background: rgba(248,113,113,.1);
+    border: 1px solid rgba(248,113,113,.45);
+    color: #fca5a5;
+    font-size: 12.5px;
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+  .px-erro.visivel { display: block; }
+
+  .px-aviso {
+    font-size: 12px;
+    color: var(--px-suave);
+    line-height: 1.45;
+    margin: 0 0 10px;
+  }
+  .px-aviso code {
+    background: rgba(79,140,255,.12);
+    border: 1px solid var(--px-borda-forte);
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: #a8c8ff;
+  }
+
+  /* ===== coluna esquerda: QR / conectado ===== */
+  .px-qr-caixa {
+    display: flex;
+    justify-content: center;
+    padding: 12px;
+    background: #ffffff;
+    border: 1px solid #d6e0f2;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    min-height: 220px;
+    align-items: center;
+  }
+  .px-qr-caixa img { width: 210px; height: 210px; display: block; }
+  .px-qr-caixa .px-qr-espere {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: #55627a;
+    font-size: 13px;
+    font-family: inherit;
+    text-align: center;
+  }
+  .px-qr-caixa .px-qr-espere .px-ico { width: 40px; height: 40px; color: #93a4c3; }
+
+  .px-andamento {
+    text-align: center;
+    font-size: 12.5px;
+    color: #9db4e8;
+    margin-bottom: 10px;
+    min-height: 18px;
+  }
+
+  .px-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    font-size: 12.5px;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 6px 12px;
+    margin-bottom: 12px;
+    background: rgba(251,191,36,.1);
+    border: 1px solid rgba(251,191,36,.45);
+    color: #fcd34d;
+  }
+  .px-badge.px-ok {
+    background: rgba(52,211,153,.12);
+    border-color: rgba(52,211,153,.5);
+    color: #6ee7b7;
+  }
+  .px-badge.px-ruim {
+    background: rgba(248,113,113,.1);
+    border-color: rgba(248,113,113,.45);
+    color: #fca5a5;
+  }
+
+  /* ===== animações (mesmas do site: pulse, bounce, spin, fadeIn) ===== */
+  @keyframes px-pulse-ico { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+  @keyframes px-bounce-ico { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+  @keyframes px-entrada-ico { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: scale(1); } }
+  @keyframes px-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+  .px-botao .px-ico, .px-link .px-ico, .px-btn-trocar .px-ico { transition: transform .18s ease; }
+  .px-botao:hover .px-ico { transform: scale(1.18); }
+  #px-btn-recarregar-qr:hover .px-ico,
+  #px-btn-recarregar-grupos:hover .px-ico { transform: rotate(180deg); transition: transform .5s ease; }
+  #px-badge-ok:not(.oculto) { animation: px-pulse-ico 2s ease-in-out infinite; }
+  .px-seguro .px-ico { animation: px-entrada-ico .45s ease both; }
+
+  /* ===== grupo fixo + botão "Trocar grupo" ===== */
+  .px-grupo-atual.px-tem-grupo {
+    border-color: rgba(79,140,255,.5);
+    background: linear-gradient(180deg, rgba(79,140,255,.1), #080e1d);
+    animation: px-sobe .3s ease both;
+  }
+  .px-grupo-linha { display: flex; align-items: flex-start; gap: 8px; }
+  .px-grupo-linha .px-check-grupo {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    color: #34d399;
+    margin-top: 1px;
+    animation: px-entrada-ico .35s ease both;
+    filter: drop-shadow(0 0 6px rgba(52,211,153,.5));
+  }
+  .px-btn-trocar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin: 0 auto 12px;
+    padding: 8px 16px;
+    border: 1px solid #3d5a94;
+    border-radius: 9px;
+    background: rgba(79,140,255,.08);
+    color: #9db4e8;
+    font: 600 12.5px/1 system-ui, sans-serif;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+    animation: px-fade-in .25s ease both;
+  }
+  .px-btn-trocar:hover { background: rgba(79,140,255,.2); color: #e8eefc; border-color: #4f8cff; }
+  .px-btn-trocar:hover .px-ico { transform: rotate(180deg); transition: transform .45s ease; }
+  .px-btn-trocar .px-ico { width: 13px; height: 13px; }
+
+  .px-conectado-card {
+    background: linear-gradient(180deg, rgba(52,211,153,.14), rgba(8,14,29,.55));
+    border: 1px solid rgba(52,211,153,.4);
+    border-radius: 14px;
+    padding: 22px 14px;
+    text-align: center;
+    color: #d1fae5;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+    box-shadow: inset 0 0 26px rgba(52,211,153,.1), 0 8px 24px rgba(0,0,0,.35);
+    animation: px-sobe .35s ease both;
+  }
+  .px-conectado-card small {
+    display: block;
+    color: #9db4e8;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .px-rodape-col {
+    margin-top: auto;
+    padding-top: 10px;
+  }
+
+  /* ===== coluna direita: grupos + mensagem ===== */
+  .px-placeholder {
+    border: 1px dashed var(--px-borda-forte);
+    border-radius: 10px;
+    padding: 34px 14px;
+    text-align: center;
+    color: var(--px-suave);
+    font-size: 13px;
+    line-height: 1.55;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .px-placeholder .px-ico { width: 30px; height: 30px; color: #44598a; }
+
+  .px-busca {
+    text-transform: none;
+    letter-spacing: normal;
+    padding-left: 34px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3c0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 10px center;
+    background-size: 15px 15px;
+  }
+
+  .px-lista {
+    max-height: 265px;
+    overflow: auto;
+    border: 1px solid var(--px-borda);
+    border-radius: 10px;
+    background: #080e1d;
+    margin-bottom: 10px;
+  }
+  .px-item-grupo {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px 13px;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid #16233f;
+    color: #e8eefc;
+    font-size: 13.5px;
+    font-family: inherit;
+    cursor: pointer;
+    line-height: 1.35;
+    transition: background .1s ease;
+  }
+  .px-item-grupo:last-child { border-bottom: 0; }
+  .px-item-grupo:hover { background: rgba(79,140,255,.16); }
+  .px-item-grupo.px-escolhido {
+    background: rgba(79,140,255,.26);
+    color: #bfdbfe;
+    font-weight: 600;
+  }
+
+  .px-vazio {
+    display: none;
+    border: 1px dashed var(--px-borda-forte);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .px-vazio.visivel { display: block; }
+  .px-vazio p { margin: 0 0 8px; font-size: 13px; color: #ccd8f2; }
+  .px-vazio .px-dica { font-size: 12px; color: var(--px-suave); line-height: 1.5; }
+
+  .px-rot {
+    display: block;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: #7286ad;
+    margin-bottom: 5px;
+  }
+
+  .px-grupo-atual {
+    background: #080e1d;
+    border: 1px solid var(--px-borda);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+  }
+  #px-nome-grupo { font-size: 14px; font-weight: 700; color: #f2f6ff; word-break: break-word; }
+
+  .px-status {
+    min-height: 18px;
+    text-align: center;
+    font-size: 12.5px;
+    color: #9db4e8;
+    margin-top: 8px;
+  }
+
+  .px-rodape {
+    margin-top: 12px;
+    text-align: center;
+    font-size: 10.5px;
+    color: #5f7194;
+    line-height: 1.5;
+    user-select: none;
+  }
+  .px-rodape a { color: inherit; }
+
+  /* ===== aviso de segurança (dá confiança pra conectar) ===== */
+  .px-seguro {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: rgba(52,211,153,.08);
+    border: 1px solid rgba(52,211,153,.32);
+    border-radius: 10px;
+    padding: 9px 12px;
+    margin: 0 0 12px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #a4e6cc;
+  }
+  .px-seguro strong { color: #6ee7b7; }
+  .px-seguro .px-ico { color: var(--px-verde); margin-top: 2px; }
+
+  /* ===== spinner durante a busca dos grupos ===== */
+  .px-spin {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+    border: 2px solid rgba(79,140,255,.25);
+    border-top-color: var(--px-azul-claro);
+    border-radius: 50%;
+    animation: px-rodar .8s linear infinite;
+  }
+  @keyframes px-rodar { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    .px-spin { animation-duration: 2.4s; }
+    #px-painel-conectado:not(.oculto), #px-painel-grupos:not(.oculto) { animation: none; }
+  }
+  #px-grupos-aviso:not(.oculto) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ===== entrada suave ao conectar (não parece travado) ===== */
+  @keyframes px-sobe { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  #px-painel-conectado:not(.oculto) { animation: px-sobe .35s ease both; }
+  #px-painel-grupos:not(.oculto) { animation: px-sobe .35s ease both; }
+  .px-badge.px-ok { animation: px-sobe .35s ease both; }
+
+  /* ===== passo da API Key (só quando o pacote não traz chave) ===== */
+  .px-chave-caixa { max-width: 520px; margin: 0 auto; padding-top: 16px; }
+</style>
+</head>
+<body>
+<div class="px-wrap">
+
+  <!-- ============ PASSO API KEY (raro: só sem chave no pacote) ============ -->
+  <section class="px-etapa" id="px-etapa-chave">
+    <div class="px-chave-caixa">
+      <div class="px-titulo">
+        <svg class="px-ico px-ico-titulo" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+        Conecte ao seu servidor de Zap
+      </div>
+      <p class="px-texto">
+        Cole a <strong>API Key</strong> do servidor Evolution (no Evolution Manager:
+        <code>Settings</code>, ou o valor <code>AUTHENTICATION_API_KEY</code> do servidor).
+        No pacote oficial a chave já vem embutida — esta tela só aparece se ela faltar.
+      </p>
+      <input class="px-campo" type="password" id="px-campo-chave" maxlength="200" placeholder="API Key" autocomplete="off" spellcheck="false">
+      <div class="px-seguro" style="margin-bottom:10px;">
+        <svg class="px-ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+        <span>Chave guardada <strong>só neste navegador</strong> e transmitida por HTTPS criptografado.</span>
+      </div>
+      <div class="px-erro" id="px-erro-chave"></div>
+      <button class="px-botao" type="button" id="px-btn-salvar-chave">
+        <svg class="px-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+        <span id="px-lbl-salvar-chave">Salvar e conectar</span>
+      </button>
+      <button class="px-botao px-secundario oculto" type="button" id="px-btn-padrao">
+        <svg class="px-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/></svg>
+        <span id="px-lbl-padrao">Usar a chave do pacote</span>
+      </button>
+      <button class="px-link oculto" type="button" id="px-btn-cancelar-chave">
+        <svg class="px-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+        Voltar
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ TELA PRINCIPAL: QR (esq) + GRUPOS (dir) ============ -->
+  <section class="px-etapa" id="px-etapa-live">
+
+    <div class="px-seguro">
+      <svg class="px-ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+      <span><strong>Ambiente seguro e criptografado (HTTPS).</strong> Sua chave e os dados da conexão ficam
+      somente neste navegador — nada é compartilhado com terceiros. Pode conectar tranquilo.</span>
+    </div>
+
+    <div class="px-duas">
+
+      <!-- ESQUERDA: conexão / QR -->
+      <div class="px-col px-col-conexao">
+        <div class="px-titulo">
+          <svg class="px-ico px-ico-titulo" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+          Conexão
+        </div>
+        <div class="px-badge" id="px-badge">
+          <svg class="px-ico" id="px-badge-espera" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <svg class="px-ico oculto" id="px-badge-ok" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+          <span id="px-badge-txt">Aguardando conexão</span>
+        </div>
+
+        <div id="px-painel-qr">
+          <p class="px-texto">
+            Abra o WhatsApp no celular, vá em <strong>Aparelhos conectados</strong>,
+            toque em <strong>Conectar aparelho</strong> e aponte a câmera para o código.
+          </p>
+          <div class="px-qr-caixa" id="px-qr-caixa">
+            <span class="px-qr-espere" id="px-qr-espere">
+              <svg class="px-ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>
+              Gerando QR Code…
+            </span>
+            <img id="px-qr-img" alt="QR Code" style="display:none">
+          </div>
+          <div class="px-andamento" id="px-qr-msg">Aguardando leitura…</div>
+          <div class="px-erro" id="px-erro-qr"></div>
+          <button class="px-botao px-secundario" type="button" id="px-btn-recarregar-qr">
+            <svg class="px-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+            Recarregar QR
+          </button>
+        </div>
+
+        <div id="px-painel-conectado" class="oculto">
+          <div class="px-conectado-card">
+            <svg class="px-ico px-ico-grande" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            WhatsApp conectado
+            <small>Este computador já tem o seu próprio WhatsApp pareado.<br>Escolha o grupo ao lado: as <strong>sugestões</strong> da operadora passam a ir direto para ele.</small>
+          </div>
+          <div class="px-erro" id="px-erro-conexao"></div>
+          <button class="px-botao px-perigo" type="button" id="px-btn-desconectar">
+            <svg class="px-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m19 5 3-3"/><path d="m2 22 3-3"/><path d="M6.3 20.3a2.4 2.4 0 0 0 3.4 0L12 18l-6-6-2.3 2.3a2.4 2.4 0 0 0 0 3.4Z"/><path d="M7.5 13.5 10 11"/><path d="M10.5 16.5 13 14"/><path d="m12 6 6 6 2.3-2.3a2.4 2.4 0 0 0 0-3.4l-2.6-2.6a2.4 2.4 0 0 0-3.4 0Z"/></svg>
+            <span id="px-lbl-desconectar">Desconectar</span>
+          </button>
+        </div>
+
+        <div class="px-rodape-col">
+          <div class="px-aviso">Instância neste navegador: <code id="px-instancia">—</code></div>
+        </div>
+      </div>
+
+      <!-- DIREITA: grupos + mensagem -->
+      <div class="px-col px-col-grupos">
+        <div class="px-titulo">
+          <svg class="px-ico px-ico-titulo" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Grupo do Suporte
+        </div>
+
+        <div class="px-placeholder" id="px-placeholder">
+          <svg class="px-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>A lista de grupos aparece aqui<br>assim que o WhatsApp for conectado.</span>
+        </div>
+
+        <div id="px-painel-grupos" class="oculto" style="display:flex;flex-direction:column;flex:1;">
+          <div class="px-grupo-atual" id="px-grupo-atual">
+            <span class="px-rot">Grupo atual</span>
+            <div class="px-grupo-linha">
+              <svg class="px-ico px-check-grupo oculto" id="px-check-grupo" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              <span id="px-nome-grupo">nenhum grupo escolhido</span>
+            </div>
+          </div>
+
+          <button class="px-btn-trocar oculto" type="button" id="px-btn-trocar">
+            <svg class="px-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+            Trocar grupo
+          </button>
+
+          <input class="px-campo px-busca" type="search" id="px-busca-grupo" placeholder="Buscar grupo…">
+          <div class="px-aviso oculto" id="px-grupos-aviso">Buscando os grupos… pode levar até 30 segundos.</div>
+          <div class="px-lista oculto" id="px-lista-grupos"></div>
+          <div class="px-vazio" id="px-grupos-vazio">
+            <p>Nenhum grupo na lista.</p>
+            <p class="px-dica">Logo após escanear o QR o WhatsApp ainda está sincronizando os grupos:
+            mande 1 mensagem em algum grupo pelo celular e toque em recarregar.</p>
+            <button class="px-botao px-secundario" type="button" id="px-btn-recarregar-grupos">
+              <svg class="px-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+              Recarregar lista
+            </button>
+          </div>
+          <div class="px-erro" id="px-erro-grupos"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <button class="px-link oculto" type="button" id="px-btn-editar-chave">
+      <svg class="px-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+      Alterar API Key
+    </button>
+    <div class="px-status" id="px-status"></div>
+
+    <div class="px-rodape" id="px-rodape">
+      Ferramenta interna · Alares Internet<br>
+      Desenvolvido por <a href="https://www.magista.dev/" target="_blank" rel="noopener noreferrer">Magista</a>
+    </div>
+  </section>
+
+</div>
+
+<script src="suporte-modal.js"></script>
+</body>
+</html>
+

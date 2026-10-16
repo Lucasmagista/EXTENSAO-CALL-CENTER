@@ -10,7 +10,9 @@
   function setTheme(theme) {
     var light = theme === 'light';
     alvoTema().classList.toggle('light', light);
-    themeBtn.textContent = light ? '🌙 Tema escuro' : '☀️ Tema claro';
+    themeBtn.innerHTML = light
+      ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg> Tema escuro'
+      : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg> Tema claro';
     themeBtn.setAttribute('aria-label', light ? 'Mudar para tema escuro' : 'Mudar para tema claro');
     try {
       localStorage.setItem('wifiDecoderTheme', theme);
@@ -201,28 +203,96 @@ function htmlUnescape(str) {
   return txt.value;
 }
 
-function extractWifiCredentials(xmlText) {
-  const results = [];
-  const seen = new Set();
-  const blockRegex = /<WLANConfigurationInstance[\s\S]*?<\/WLANConfigurationInstance>/g;
-  let m;
-  while ((m = blockRegex.exec(xmlText)) !== null) {
-    const block = m[0];
-    const ssidMatch = block.match(/SSID="([^"]*)"/);
-    const pskMatch = block.match(/<PreSharedKeyInstance[^>]*PreSharedKey="([^"]*)"/);
-    if (!ssidMatch || !pskMatch) continue;
-    const ssid = htmlUnescape(ssidMatch[1]);
-    if (/easymesh/i.test(ssid)) continue;
-    const rawKey = htmlUnescape(pskMatch[1]);
-    if (!rawKey) continue;
-    const pw = hwDecrypt(rawKey);
-    if (pw === null) continue;
-    const id = ssid + '|' + pw;
-    if (seen.has(id)) continue;
-    seen.add(id);
-    results.push({ ssid, pw });
+// Localiza o SSID mais próximo da chave no XML (atributo SSID="..." ou
+// elemento <SSID>...</SSID>, antes ou depois) — assim funciona em qualquer
+// estrutura de hw_ctree.xml, com ou sem <WLANConfigurationInstance>.
+function acharSsidPerto(xmlText, idx) {
+  let melhor = null, melhorPos = -1, m;
+  const reAttr = /\bSSID\s*=\s*"([^"]*)"/gi;
+  while ((m = reAttr.exec(xmlText)) !== null) {
+    if (m.index < idx && m.index > melhorPos) { melhor = m[1]; melhorPos = m.index; }
   }
-  return results;
+  const reEl = /<SSID\b[^>]*>([^<]*)<\/SSID\s*>/gi;
+  while ((m = reEl.exec(xmlText)) !== null) {
+    if (m.index < idx && m.index > melhorPos) { melhor = m[1]; melhorPos = m.index; }
+  }
+  if (melhor !== null) return htmlUnescape(melhor).trim();
+  const janela = xmlText.slice(idx, idx + 3000);
+  const a = janela.match(/\bSSID\s*=\s*"([^"]*)"/i);
+  const b = janela.match(/<SSID\b[^>]*>([^<]*)<\/SSID\s*>/i);
+  if (a) return htmlUnescape(a[1]).trim();
+  if (b) return htmlUnescape(b[1]).trim();
+  return null;
+}
+
+function extractWifiCredentials(xmlText) {
+  const resultados = [];
+  const vistos = new Set();
+  const candidatos = [];
+  let m;
+
+  // chaves em atributo: PreSharedKey="...", KeyPassphrase="...", WPAPsk="..."
+  const reAtributo = /\b(?:PreSharedKey|KeyPassphrase|WPAPsk|WPAPSK|Passphrase)\s*=\s*"([^"]*)"/gi;
+  while ((m = reAtributo.exec(xmlText)) !== null) {
+    candidatos.push({ valor: m[1], pos: m.index });
+  }
+
+  // chaves em elemento: <PreSharedKey>$2...$</PreSharedKey> (qualquer tag da lista)
+  const reElemento = /<(PreSharedKey|KeyPassphrase|WPAPsk|WPAPSK|Passphrase)\b[^>]*>([^<]*)<\/\1\s*>/gi;
+  while ((m = reElemento.exec(xmlText)) !== null) {
+    candidatos.push({ valor: m[2], pos: m.index });
+  }
+
+  candidatos.sort(function (a, b) { return a.pos - b.pos; });
+
+  for (let i = 0; i < candidatos.length; i++) {
+    const bruto = htmlUnescape(candidatos[i].valor).trim();
+    if (bruto.indexOf('$2') !== 0) continue;
+    const senha = hwDecrypt(bruto);
+    if (senha === null || senha === '') continue;
+    let ssid = acharSsidPerto(xmlText, candidatos[i].pos);
+    if (ssid && /easymesh/i.test(ssid)) continue;
+    if (!ssid) ssid = '(SSID não identificado)';
+    const id = ssid + '|' + senha;
+    if (vistos.has(id)) continue;
+    vistos.add(id);
+    resultados.push({ ssid: ssid, pw: senha });
+  }
+  return resultados;
+}
+
+// Lê o arquivo como ArrayBuffer: detecta container criptografado do roteador
+// (magic 01 00 00 00 / gzip) e a codificação real (UTF-8, UTF-16 ou fallback).
+function lerTextoDoArquivo(file, callback) {
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const buf = new Uint8Array(e.target.result);
+    if (buf.length >= 4 && buf[0] === 0x01 && buf[1] === 0x00 && buf[2] === 0x00 && buf[3] === 0x00) {
+      callback({ erro: 'container' });
+      return;
+    }
+    if (buf.length >= 2 && buf[0] === 0x1f && buf[1] === 0x8b) {
+      callback({ erro: 'container' });
+      return;
+    }
+    let texto;
+    if (buf.length >= 2 && buf[0] === 0xff && buf[1] === 0xfe) {
+      texto = new TextDecoder('utf-16le').decode(buf);
+    } else if (buf.length >= 2 && buf[0] === 0xfe && buf[1] === 0xff) {
+      texto = new TextDecoder('utf-16be').decode(buf);
+    } else {
+      try {
+        texto = new TextDecoder('utf-8', { fatal: true }).decode(buf);
+      } catch (err) {
+        texto = new TextDecoder('windows-1252').decode(buf);
+      }
+    }
+    callback({ texto: texto });
+  };
+  reader.onerror = function () {
+    callback({ erro: 'leitura' });
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 
@@ -284,36 +354,42 @@ function processarArquivo(file) {
   resultadoEl.style.display = 'none';
   corpoTabelaEl.innerHTML = '';
   definirStatus('', '');
-
-  if (!/\.xml$/i.test(file.name)) {
-    definirStatus('Envie apenas arquivos .xml (ex.: hw_ctree.xml).', 'erro');
-    return;
-  }
-
   mostrarCarregando(true);
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
+  lerTextoDoArquivo(file, function (leitura) {
+    mostrarCarregando(false);
+
+    if (leitura.erro === 'container') {
+      definirStatus('Este arquivo está criptografado pelo roteador (backup .enc). Baixe o XML pelo caminho indicado acima (Download Configuration File) e envie o arquivo hw_ctree.xml.', 'erro');
+      return;
+    }
+    if (leitura.erro === 'leitura') {
+      definirStatus('Não foi possível ler o arquivo.', 'erro');
+      return;
+    }
+
+    const texto = leitura.texto || '';
+    if (texto.indexOf('$2') === -1) {
+      definirStatus('Nenhuma chave codificada ($2...$) foi encontrada no arquivo. Verifique se é o backup hw_ctree.xml baixado do roteador.', 'erro');
+      return;
+    }
+
+    let creds;
     try {
-      const text = e.target.result;
-      const creds = extractWifiCredentials(text);
-      if (creds.length === 0) {
-        definirStatus('Nenhuma rede WiFi com senha encontrada nesse arquivo. Verifique se é o backup correto (hw_ctree.xml).', 'erro');
-        return;
-      }
-      renderizarResultados(creds, file.name);
-      definirStatus(creds.length + ' rede(s) encontrada(s) e decodificada(s) com sucesso.', 'ok');
+      creds = extractWifiCredentials(texto);
     } catch (err) {
       definirStatus('Erro ao processar o arquivo: ' + err.message, 'erro');
-    } finally {
-      mostrarCarregando(false);
+      return;
     }
-  };
-  reader.onerror = () => {
-    mostrarCarregando(false);
-    definirStatus('Não foi possível ler o arquivo.', 'erro');
-  };
-  reader.readAsText(file, 'utf-8');
+
+    if (creds.length === 0) {
+      definirStatus('O arquivo tem chaves codificadas, mas nenhuma senha pôde ser decodificada. Confirme que é o backup do X6 (hw_ctree.xml).', 'erro');
+      return;
+    }
+
+    renderizarResultados(creds, file.name);
+    definirStatus(creds.length + ' rede(s) encontrada(s) e decodificada(s) com sucesso.', 'ok');
+  });
 }
 
 function renderizarResultados(creds, nomeArquivo) {
@@ -335,7 +411,7 @@ function renderizarResultados(creds, nomeArquivo) {
     const copyBtn = document.createElement('button');
     copyBtn.type = 'button';
     copyBtn.className = 'dx-copiar';
-    copyBtn.textContent = '📋 Copiar';
+    copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg> Copiar';
     copyBtn.addEventListener('click', function () {
       copiarSenha(c.pw, copyBtn);
     });
@@ -351,9 +427,9 @@ function renderizarResultados(creds, nomeArquivo) {
 
 function copiarSenha(texto, botao) {
   function sucesso() {
-    botao.textContent = '✓ Copiado';
+    botao.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> Copiado';
     setTimeout(function () {
-      botao.textContent = '📋 Copiar';
+      botao.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg> Copiar';
     }, 1500);
   }
 

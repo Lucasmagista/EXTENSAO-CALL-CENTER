@@ -7,6 +7,9 @@
 (function () {
   // Evita dupla injeção (script estático + dinâmico na mesma aba)
   if (window.__cctoolsFabAtivo) return;
+  // UI só no frame principal — iframes (ads, painéis embutidos, about:blank)
+  // não devem receber botão próprio; era isso que gerava vários botões
+  if (window.top !== window) return;
   window.__cctoolsFabAtivo = true;
 
   var CONFIG_KEY = "ccTools_configModos";
@@ -86,17 +89,48 @@
     else fecharMenu();
   }
 
-  function botaoAcao(texto, acao) {
+  // Ícones Lucide (mesmos SVGs de animateicons.in/icons/lucide) — embutidos
+  // aqui porque o CSP da MV3 não deixa carregar código/ícone remoto.
+  var ICO = {
+    "check": "<path d=\"M20 6 9 17l-5-5\"/>",
+    "send": "<path d=\"M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z\"/><path d=\"m21.854 2.147-10.94 10.939\"/>",
+    "settings": "<path d=\"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>",
+    "clipboard": "<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/><path d=\"M12 11h4\"/><path d=\"M12 16h4\"/><path d=\"M8 11h.01\"/><path d=\"M8 16h.01\"/>",
+    "message-circle": "<path d=\"M7.9 20A9 9 0 1 0 4 16.1L2 22Z\"/>",
+    "file": "<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\"/><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/><path d=\"M10 9H8\"/><path d=\"M16 13H8\"/><path d=\"M16 17H8\"/>",
+    "router": "<rect width=\"20\" height=\"8\" x=\"2\" y=\"14\" rx=\"2\"/><path d=\"M6.01 18H6\"/><path d=\"M10.01 18H10\"/><path d=\"M15 10v4\"/><path d=\"M17.84 7.17a4 4 0 0 0-5.66 0\"/><path d=\"M20.66 4.34a8 8 0 0 0-11.31 0\"/>",
+    "wifi": "<path d=\"M12 20h.01\"/><path d=\"M2 8.82a15 15 0 0 1 20 0\"/><path d=\"M5 12.859a10 10 0 0 1 14 0\"/><path d=\"M8.5 16.429a5 5 0 0 1 7 0\"/>",
+    "link": "<path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\"/><path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\"/>",
+    "arrow-right": "<path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/>",
+    "volume": "<path d=\"M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z\"/><path d=\"M16 9a5 5 0 0 1 0 6\"/><path d=\"M19.364 18.364a9 9 0 0 0 0-12.728\"/>",
+    "panel": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/><path d=\"M15 3v18\"/>"
+  };
+
+  function escHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function icoSvg(nome) {
+    return ICO[nome]
+      ? '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICO[nome] + "</svg>"
+      : "";
+  }
+
+  function botaoAcao(texto, acao, icone) {
     var b = document.createElement("button");
     b.type = "button";
     b.className = "fab-acao";
-    b.textContent = texto;
+    b.innerHTML = (icone ? icoSvg(icone) : "") + "<span>" + escHtml(texto) + "</span>";
     if (acao) b.dataset.acao = acao;
     return b;
   }
 
   function criarEstrutura() {
     if (raiz || !document.body) return;
+    // Remove órfão deixado por injeção anterior (ex.: extensão recarregada)
+    var orfao = document.getElementById("cctools-fab");
+    if (orfao && orfao.parentNode) orfao.parentNode.removeChild(orfao);
     if (!acoes()) return; // quandoAcoesProntas rechama aplicarModo quando chegar
 
     raiz = document.createElement("div");
@@ -121,25 +155,26 @@
     menu.appendChild(titulo);
 
     // Rodízio
-    menu.appendChild(botaoAcao('📨 Enviar "prox"', "prox"));
-    menu.appendChild(botaoAcao("✅ Enviar ✅", "check"));
+    menu.appendChild(botaoAcao("Enviar", "check", "check"));
+    menu.appendChild(botaoAcao("Enviar PROX", "prox-enviar", "send"));
+    menu.appendChild(botaoAcao("Configurar PROX", "prox-config", "settings"));
 
     menu.appendChild(document.createElement("div")).className = "fab-divisoria";
 
     // Ferramentas de atendimento
-    menu.appendChild(botaoAcao("📋 Relatos", "relatos"));
-    menu.appendChild(botaoAcao("💬 Mensagens", "mensagens"));
-    menu.appendChild(botaoAcao("📝 Snippets", "snippets"));
-    menu.appendChild(botaoAcao("📡 Configurar x6", "huawei"));
-    menu.appendChild(botaoAcao("🔑 Senha Wi-Fi x6", "senha-wifi"));
+    menu.appendChild(botaoAcao("Relatos", "relatos", "clipboard"));
+    menu.appendChild(botaoAcao("Mensagens", "mensagens", "message-circle"));
+    menu.appendChild(botaoAcao("Snippets", "snippets", "file"));
+    menu.appendChild(botaoAcao("Configurar x6", "huawei", "router"));
+    menu.appendChild(botaoAcao("Senha Wi-Fi x6", "senha-wifi", "wifi"));
 
     // Links (abre submenu com os 3 links)
-    var btnLinks = botaoAcao("🔗 Links ▸", "links-toggle");
+    var btnLinks = botaoAcao("Links ▸", "links-toggle", "link");
     menu.appendChild(btnLinks);
     subLinks = document.createElement("div");
     subLinks.className = "fab-sub fab-oculto";
     acoes().LINKS.forEach(function (l) {
-      var b = botaoAcao("→ " + l.nome, "abrir-link");
+      var b = botaoAcao(l.nome, "abrir-link", "arrow-right");
       b.dataset.url = l.url;
       subLinks.appendChild(b);
     });
@@ -150,7 +185,7 @@
     // Volume (mesmo storage da popup e da barra lateral)
     var volWrap = document.createElement("label");
     volWrap.className = "fab-volume";
-    volWrap.appendChild(document.createTextNode("🔊"));
+    volWrap.insertAdjacentHTML("afterbegin", icoSvg("volume"));
     var volInput = document.createElement("input");
     volInput.type = "range";
     volInput.min = "0";
@@ -162,7 +197,7 @@
     menu.appendChild(document.createElement("div")).className = "fab-divisoria";
 
     // Trocar forma de acesso
-    menu.appendChild(botaoAcao("📐 Usar barra lateral", "modo-lateral"));
+    menu.appendChild(botaoAcao("Usar barra lateral", "modo-lateral", "panel"));
 
     statusEl = document.createElement("div");
     statusEl.className = "fab-status";

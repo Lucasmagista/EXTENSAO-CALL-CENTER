@@ -5,34 +5,39 @@
 <title>Snippets — Call Center Tools</title>
 <link rel="stylesheet" href="styles.css">
 <style>
+  html, body{ height:100%; }
   body{
     margin:0;
-    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
     background: url('assets/background.webp') center center / cover no-repeat fixed, var(--bg1);
     font-family:"Segoe UI", Arial, sans-serif;
     color:var(--text);
   }
   header{
+    flex-shrink:0;
     display:flex;
     align-items:center;
     justify-content:space-between;
-    padding:16px 28px;
+    gap:12px;
+    padding:12px 22px;
     background: rgba(45,11,78,0.85);
     border-bottom:1px solid var(--border);
     backdrop-filter: blur(4px);
   }
-  header .brand{ display:flex; align-items:center; gap:12px; }
-  header .brand img{ height:34px; }
-  header h1{ font-size:18px; margin:0; font-weight:600; letter-spacing:.3px; }
-  header .contagem{ font-size:12px; opacity:.75; margin-top:2px; }
-  .header-acoes{ display:flex; gap:8px; }
+  header .brand{ display:flex; align-items:center; gap:12px; min-width:0; }
+  header .brand img{ height:32px; }
+  header h1{ font-size:16px; margin:0; font-weight:600; letter-spacing:.3px; white-space:nowrap; }
+  header .contagem{ font-size:11.5px; opacity:.75; margin-top:2px; }
+  .header-acoes{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
   .botao-header{
     background:transparent;
     color:var(--text);
     border:1px solid var(--border);
     border-radius:var(--raio);
-    padding:8px 13px;
-    font-size:12.5px;
+    padding:7px 12px;
+    font-size:12px;
     font-weight:600;
     cursor:pointer;
     transition: all .15s ease;
@@ -41,33 +46,37 @@
   .botao-header:hover{ background:var(--accent); color:#08281f; border-color:var(--accent); }
 
   main{
+    flex:1;
     display:flex;
-    height:calc(100vh - 68px);
+    min-height:0;
   }
 
   /* ===== Sidebar (lista) ===== */
   #sidebar{
-    width:340px;
-    min-width:280px;
+    width:320px;
+    min-width:250px;
+    max-width:42%;
     background: rgba(20,6,38,0.55);
     border-right:1px solid var(--border);
     display:flex;
     flex-direction:column;
+    min-height:0;
   }
   #sidebar .toolbar{
-    padding:14px;
+    padding:10px 12px;
     display:flex;
     gap:8px;
     border-bottom:1px solid rgba(255,255,255,0.08);
   }
   #busca{
     flex:1;
+    min-width:0;
     background:rgba(0,0,0,0.25);
     border:1px solid var(--border);
     border-radius:var(--raio-pequeno);
-    padding:9px 12px;
+    padding:8px 11px;
     color:#fff;
-    font-size:13px;
+    font-size:12.5px;
     outline:none;
   }
   #busca:focus{ border-color:var(--accent); }
@@ -76,9 +85,9 @@
     color:#0c2b23;
     border:none;
     border-radius:var(--raio);
-    padding:9px 14px;
+    padding:8px 12px;
     font-weight:700;
-    font-size:13px;
+    font-size:12.5px;
     cursor:pointer;
     white-space:nowrap;
     transition: background .15s ease;
@@ -88,41 +97,46 @@
   #lista{
     flex:1;
     overflow-y:auto;
-    padding:6px 0;
+    min-height:0;
+    padding:4px 0;
   }
   .item{
     display:flex;
     align-items:flex-start;
-    gap:10px;
-    padding:12px 16px;
+    gap:9px;
+    padding:10px 14px;
     cursor:pointer;
     border-bottom:1px solid rgba(255,255,255,0.06);
     transition: background .12s ease;
   }
   .item .chk-item{ margin-top:3px; flex-shrink:0; cursor:pointer; }
-  .item .item-textos{ display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; }
+  .item .chk-item:disabled{ cursor:not-allowed; opacity:.4; }
+  .item .item-textos{ display:flex; flex-direction:column; gap:2px; min-width:0; flex:1; }
   .item:hover{ background:rgba(255,255,255,0.06); }
   .item.ativo{ background:var(--accent); }
   .item.ativo .item-shortcut{ color:#08281f; }
   .item.ativo .item-preview{ color:#0c2b23; }
-  .item-shortcut{ font-size:13px; font-weight:700; color:var(--purple); }
-  .tag-padrao{ display:inline-block; margin-left:6px; padding:1px 6px; border-radius:8px; font-size:10px; font-weight:600; color:var(--accent); border:1px solid var(--accent); vertical-align:middle; }
+  .item-shortcut{ font-size:12.5px; font-weight:700; color:var(--purple); }
+  .tag-padrao{ display:inline-block; margin-left:6px; padding:1px 6px; border-radius:8px; font-size:9.5px; font-weight:600; color:var(--accent); border:1px solid var(--accent); vertical-align:middle; }
+  .tag-local{ display:inline-block; margin-left:6px; padding:1px 6px; border-radius:8px; font-size:9.5px; font-weight:600; color:#fbbf24; border:1px solid #fbbf24; vertical-align:middle; }
+  .tag-novo{ display:inline-block; margin-left:6px; padding:1px 6px; border-radius:8px; font-size:9.5px; font-weight:700; color:#f472b6; border:1px solid #f472b6; vertical-align:middle; }
   .item.ativo .tag-padrao{ color:#08281f; border-color:#08281f; }
-  #avisoPadrao{ margin-bottom:14px; padding:8px 10px; border-radius:var(--raio-pequeno); font-size:12px; line-height:1.4; border:1px solid var(--accent); opacity:.9; }
-  #statusSync{ font-size:11px; opacity:.6; margin-top:2px; }
-  .item-preview{ font-size:12px; color:#d1d5db; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .item.ativo .tag-local{ color:#6b4a00; border-color:#6b4a00; background:#fde68a; }
+  .item.ativo .tag-novo{ color:#831843; border-color:#831843; background:#fbcfe8; }
+  #statusSync{ font-size:10.5px; opacity:.6; margin-top:2px; }
+  .item-preview{ font-size:11.5px; color:#d1d5db; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
   .toolbar-selecao{
     justify-content:space-between;
     align-items:center;
-    padding-top:10px;
-    padding-bottom:10px;
+    padding-top:8px;
+    padding-bottom:8px;
   }
   .chk-todos-label{
     display:flex;
     align-items:center;
     gap:6px;
-    font-size:12px;
+    font-size:11.5px;
     color:#d1d5db;
     cursor:pointer;
     user-select:none;
@@ -133,8 +147,8 @@
     color:var(--danger);
     border:1px solid var(--danger);
     border-radius:var(--raio);
-    padding:7px 12px;
-    font-size:12px;
+    padding:6px 10px;
+    font-size:11px;
     font-weight:700;
     cursor:pointer;
     white-space:nowrap;
@@ -150,17 +164,56 @@
   }
 
   #vazio{
-    padding:40px 20px;
+    padding:32px 18px;
     text-align:center;
-    font-size:13px;
+    font-size:12.5px;
     color:#c9bce6;
     opacity:.8;
   }
 
+  /* ===== Área do administrador (rodapé da lista) ===== */
+  #admin-box{
+    flex-shrink:0;
+    border-top:1px solid rgba(255,255,255,0.1);
+    padding:10px 12px;
+    background:rgba(0,0,0,0.22);
+    font-size:11.5px;
+  }
+  #admin-titulo{ font-weight:700; opacity:.85; margin-bottom:6px; }
+  #admin-linha{ display:flex; gap:6px; }
+  #admin-senha{
+    flex:1;
+    min-width:0;
+    background:rgba(0,0,0,0.3);
+    border:1px solid var(--border);
+    border-radius:var(--raio-pequeno);
+    padding:7px 10px;
+    color:#fff;
+    font-size:12px;
+    outline:none;
+  }
+  #admin-senha:focus{ border-color:var(--accent); }
+  #admin-entrar{
+    background:var(--btn);
+    color:#0c2b23;
+    border:none;
+    border-radius:var(--raio-pequeno);
+    padding:7px 12px;
+    font-weight:700;
+    font-size:12px;
+    cursor:pointer;
+  }
+  #admin-entrar:hover{ background:var(--btn-hover); color:#fff; }
+  #admin-status{ margin-top:6px; line-height:1.4; }
+  #admin-status.ok{ color:var(--accent); }
+  #admin-status.erro{ color:#f87171; }
+  #admin-dica{ opacity:.6; margin-top:4px; line-height:1.4; }
+
   /* ===== Editor ===== */
   #editor{
     flex:1;
-    padding:28px 34px;
+    min-width:0;
+    padding:20px 26px;
     overflow-y:auto;
   }
   #editor-vazio{
@@ -173,16 +226,16 @@
     opacity:.7;
     gap:10px;
   }
-  #editor-vazio img{ height:70px; opacity:.5; }
+  #editor-vazio img{ height:60px; opacity:.5; }
 
-  .campo{ margin-bottom:18px; max-width:640px; }
+  .campo{ margin-bottom:14px; max-width:640px; }
   .campo label{
     display:block;
-    font-size:12px;
+    font-size:11.5px;
     text-transform:uppercase;
     letter-spacing:.5px;
     color:var(--purple);
-    margin-bottom:6px;
+    margin-bottom:5px;
     font-weight:700;
   }
   .campo input, .campo textarea{
@@ -190,47 +243,50 @@
     background:rgba(0,0,0,0.25);
     border:1px solid var(--border);
     border-radius:var(--raio-pequeno);
-    padding:11px 14px;
+    padding:10px 13px;
     color:#fff;
-    font-size:14px;
+    font-size:13.5px;
     outline:none;
     font-family:inherit;
     transition: border-color .15s ease;
   }
   .campo input:focus, .campo textarea:focus{ border-color:var(--accent); }
-  .campo textarea{ min-height:220px; resize:vertical; line-height:1.5; }
+  .campo input:disabled, .campo textarea:disabled{ opacity:.55; cursor:not-allowed; }
+  .campo textarea{ min-height:170px; resize:vertical; line-height:1.5; }
   .linha-audio{ display:flex; gap:8px; }
   .linha-audio select{
     flex:1;
+    min-width:0;
     background:rgba(0,0,0,0.25);
     border:1px solid var(--border);
     border-radius:var(--raio-pequeno);
-    padding:11px 14px;
+    padding:10px 13px;
     color:#fff;
-    font-size:14px;
+    font-size:13.5px;
     outline:none;
     font-family:inherit;
   }
+  .linha-audio select:disabled{ opacity:.55; cursor:not-allowed; }
   .linha-audio select option{ background:#29154f; color:#fff; }
   #btnTestarAudio{
     background:transparent;
     color:var(--text);
     border:1px solid var(--border);
     border-radius:var(--raio-pequeno);
-    padding:0 16px;
-    font-size:13px;
+    padding:0 14px;
+    font-size:12.5px;
     font-weight:700;
     cursor:pointer;
     transition: all .15s ease;
   }
   #btnTestarAudio:hover{ background:var(--accent); color:#08281f; border-color:var(--accent); }
-  .dica{ font-size:11px; color:#c9bce6; margin-top:6px; opacity:.8; }
+  .dica{ font-size:11px; color:#c9bce6; margin-top:5px; opacity:.8; }
 
-  .acoes{ display:flex; gap:10px; margin-top:24px; max-width:640px; }
+  .acoes{ display:flex; gap:10px; margin-top:18px; max-width:640px; flex-wrap:wrap; }
   .acoes button{
-    padding:11px 20px;
+    padding:10px 18px;
     border-radius:var(--raio);
-    font-size:14px;
+    font-size:13.5px;
     font-weight:700;
     cursor:pointer;
     border:1px solid transparent;
@@ -238,8 +294,10 @@
   }
   #btnSalvar{ background:var(--accent); color:#08281f; }
   #btnSalvar:hover{ filter:brightness(1.1); }
+  #btnSalvar:disabled{ opacity:.45; cursor:not-allowed; filter:none; }
   #btnExcluir{ background:transparent; color:var(--danger); border-color:var(--danger); }
   #btnExcluir:hover{ background:var(--danger); color:#2d0b4e; }
+  #btnExcluir:disabled{ opacity:.4; cursor:not-allowed; background:transparent; color:var(--danger); }
 
   #msgSalvo{
     display:inline-flex;
@@ -250,21 +308,88 @@
     transition:opacity .2s ease;
   }
 
+  #avisoPadrao{ margin-bottom:12px; padding:8px 10px; border-radius:var(--raio-pequeno); font-size:12px; line-height:1.45; border:1px solid var(--accent); opacity:.95; }
+  #avisoLocal{ margin-bottom:12px; padding:8px 10px; border-radius:var(--raio-pequeno); font-size:12px; line-height:1.45; border:1px solid #fbbf24; color:#fde68a; }
+  #avisoLocal a{ color:#fff; }
+
+  /* ===== Modal Importar/Exportar ===== */
+  .modal-fundo{
+    position:fixed;
+    inset:0;
+    background:rgba(10,2,20,0.72);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:60;
+    backdrop-filter:blur(3px);
+    padding:16px;
+  }
+  .modal-caixa{
+    background:#1d0f38;
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:20px 22px;
+    width:min(470px, 94vw);
+    max-height:90vh;
+    overflow-y:auto;
+    box-shadow:0 18px 50px rgba(0,0,0,.55);
+  }
+  .modal-caixa h2{ margin:0 0 8px; font-size:15.5px; }
+  .modal-dica{ font-size:12px; opacity:.85; line-height:1.55; margin:0 0 14px; }
+  .modal-botoes{ display:flex; flex-direction:column; gap:9px; }
+  .modal-botoes button{
+    background:transparent;
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:var(--raio);
+    padding:11px 14px;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+    text-align:left;
+    transition: all .15s ease;
+  }
+  .modal-botoes button:hover{ background:var(--accent); color:#08281f; border-color:var(--accent); }
+  .modal-botoes .sub{ display:block; font-weight:400; font-size:11px; opacity:.75; margin-top:2px; }
+  .modal-fechar{ margin-top:14px; text-align:right; }
+  .modal-fechar button{
+    background:transparent;
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:var(--raio);
+    padding:8px 16px;
+    font-size:12.5px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .modal-fechar button:hover{ border-color:var(--danger); color:var(--danger); }
+
   footer{
+    flex-shrink:0;
     text-align:center;
     font-size:11px;
     opacity:.55;
-    padding:10px;
+    padding:7px 10px;
   }
+  footer a{ color:inherit; }
 
   ::-webkit-scrollbar{ width:8px; }
   ::-webkit-scrollbar-thumb{ background:var(--border); border-radius:4px; }
+
+  /* Animações de ícone (mesmas do site: bounce no hover, pulse, fade de entrada) */
+  @keyframes cc-ico-pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  @keyframes cc-ico-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+  @keyframes cc-ent{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  button svg, .botao-header svg{ transition:transform .16s ease; }
+  button:hover svg, .botao-header:hover svg{ transform:scale(1.18) translateY(-1px); animation:cc-ico-bounce .5s ease infinite; }
+  #msgSalvo:not(.oculto) svg{ animation:cc-ico-pulse 2s ease-in-out infinite; }
+  button{ animation:cc-ent .22s ease both; }
 </style>
 </head>
 <body>
   <header>
     <div class="brand">
-      <img src="assets/logo.png" alt="Logo Alares">
+      <img src="assets/alares.png" alt="Logo Alares">
       <div>
         <h1>Snippets — Mensagens Rápidas</h1>
         <div class="contagem" id="contagem">0 snippets salvos</div>
@@ -272,10 +397,8 @@
       </div>
     </div>
     <div class="header-acoes">
-      <button id="btnSincronizar" class="botao-header" title="Restaurar a lista padrão que vem com a extensão (seus snippets não são alterados)">🔄 Atualizar padrão</button>
-      <button id="btnExportar" class="botao-header" title="Baixar todos os snippets em um arquivo .json">⬇ Exportar</button>
-      <button id="btnImportar" class="botao-header" title="Carregar snippets de um arquivo .json">⬆ Importar</button>
-      <input type="file" id="inputImportar" accept="application/json,.json" style="display:none;">
+      <button id="btnSincronizar" class="botao-header" title="Buscar a lista padrão mais recente no GitHub (seus snippets não são alterados)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg> Atualizar padrão</button>
+      <button id="btnImpExp" class="botao-header" title="Exportar só os seus snippets ou importar de um arquivo .txt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg> Importar / Exportar</button>
     </div>
   </header>
 
@@ -288,21 +411,31 @@
       <div class="toolbar toolbar-selecao">
         <label class="chk-todos-label">
           <input type="checkbox" id="chkTodos">
-          Selecionar todos
+          Selecionar todos (meus)
         </label>
-        <button id="btnApagarSelecionados" disabled>🗑 Apagar selecionados (0)</button>
+        <button id="btnApagarSelecionados" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg> Apagar selecionados (0)</button>
       </div>
       <div id="lista"></div>
+      <div id="admin-box">
+        <div id="admin-titulo">🔒 Área do administrador</div>
+        <div id="admin-linha">
+          <input type="password" id="admin-senha" maxlength="20" placeholder="Senha do admin" autocomplete="off">
+          <button id="admin-entrar" type="button">Entrar</button>
+        </div>
+        <div id="admin-status"></div>
+        <div id="admin-dica">Somente o administrador pode alterar ou apagar os snippets <strong>padrão</strong> e adicionar novos padrões para a equipe.</div>
+      </div>
     </div>
 
     <div id="editor">
       <div id="editor-vazio">
-        <img src="assets/logo.png" alt="">
+        <img src="assets/alares.png" alt="">
         <div>Selecione um snippet na lista ao lado<br>ou clique em <strong>+ Novo</strong> para criar um.</div>
       </div>
 
       <div id="editor-form" class="oculto">
-        <div id="avisoPadrao" class="oculto">📌 Este é um snippet <strong>padrão</strong> e recebe atualizações automáticas. Se você alterar e salvar, ele passa a ser seu e não será mais atualizado.</div>
+        <div id="avisoPadrao" class="oculto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px" aria-hidden="true"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg> <span id="avisoPadraoTexto"></span></div>
+        <div id="avisoLocal" class="oculto">📌 Este snippet é <strong>somente seu</strong> (tag LOCAL) — ele não aparece para as outras pessoas. Se quiser <strong>compartilhar</strong> um comando com o time, use o botão <strong>Sugestões</strong> da extensão e mande sua ideia por lá — o administrador adiciona para todo mundo.</div>
         <div class="campo">
           <label>Atalho</label>
           <input type="text" id="campoAtalho" placeholder="/saudacao">
@@ -321,20 +454,41 @@
           <label>Áudio ao usar (opcional)</label>
           <div class="linha-audio">
             <select id="campoAudio"><option value="">Nenhum</option></select>
-            <button type="button" id="btnTestarAudio" title="Ouvir o áudio selecionado">▶ Testar</button>
+            <button type="button" id="btnTestarAudio" title="Ouvir o áudio selecionado"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="vertical-align:-2px" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg> Testar</button>
           </div>
-          <div class="dica">O volume é ajustado na barra do popup da extensão. Para adicionar novos áudios: coloque o arquivo na pasta <strong>assets</strong> e inclua o nome dele em <strong>assets/audios.json</strong>.</div>
+          <div class="dica">O volume é ajustado na tela Configurações do popup. Para adicionar novos áudios: coloque o arquivo na pasta <strong>assets</strong> e inclua o nome dele em <strong>assets/audios.json</strong>.</div>
+        </div>
+        <div class="campo oculto" id="campoPadraoWrap">
+          <label class="chk-todos-label" style="font-size:12.5px;color:var(--text);">
+            <input type="checkbox" id="campoPadrao">
+            Marcar como <strong>padrão</strong> (fixo para a equipe e recebe atualizações)
+          </label>
         </div>
         <div class="acoes">
           <button id="btnSalvar">Salvar</button>
           <button id="btnExcluir">Excluir</button>
-          <span id="msgSalvo">✔ Salvo</span>
+          <span id="msgSalvo"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> Salvo</span>
         </div>
       </div>
     </div>
   </main>
 
-  <footer>Criado por Mometto e Diogo — Magista</footer>
+  <!-- Modal Importar / Exportar -->
+  <div id="modalImpExp" class="modal-fundo oculto">
+    <div class="modal-caixa">
+      <h2>Importar / Exportar snippets</h2>
+      <p class="modal-dica">A exportação leva <strong>apenas os seus snippets (tag LOCAL)</strong>. Os snippets <strong>padrão</strong> fazem parte do pacote da extensão — não são exportados e não são sobrescritos na importação.</p>
+      <div class="modal-botoes">
+        <button id="btnExportarTxt" type="button">Exportar meus snippets (.txt)<span class="sub">Baixa um arquivo .txt com todos os seus, no formato de importação.</span></button>
+        <button id="btnImportarArquivo" type="button">Importar arquivo (.txt ou .json)<span class="sub">Os snippets importados entram como LOCAL (seus).</span></button>
+        <button id="btnModeloTxt" type="button">Baixar modelo em branco (.txt)<span class="sub">Modelo comentado para preencher e importar sem erro.</span></button>
+      </div>
+      <input type="file" id="inputImportar" accept=".txt,.json,text/plain,application/json" style="display:none;">
+      <div class="modal-fechar"><button id="btnFecharImpExp" type="button">Fechar</button></div>
+    </div>
+  </div>
+
+  <footer>Criado por Mometto e Diogo — <a href="https://www.magista.dev/" target="_blank" rel="noopener noreferrer">Magista</a></footer>
 
   <script src="snippets.js"></script>
 </body>

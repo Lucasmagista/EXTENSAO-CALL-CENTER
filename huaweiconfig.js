@@ -180,7 +180,7 @@
 
         let titulo = document.createElement("div");
         titulo.style.cssText = "font-weight:700;margin-bottom:8px;color:#f59e0b;font-size:14px;text-align:center;";
-        titulo.textContent = "⚠️ Relatório Pronto (Some em 20s)";
+        titulo.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg> Relatório Pronto (Some em 20s)';
         toast.appendChild(titulo);
 
         let corpo = document.createElement("div");
@@ -193,8 +193,8 @@
         }, 20000);
 
         let btnCopiar = document.createElement("button");
-        btnCopiar.textContent = "📋 Copiar Relatório";
-        btnCopiar.style.cssText = "display:block;width:100%;padding:10px;background:#42d3a5;color:#000000;border:none;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;margin-bottom:10px;transition:background 0.2s;";
+        btnCopiar.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg><span>Copiar Relatório</span>';
+        btnCopiar.style.cssText = "display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:10px;background:#42d3a5;color:#000000;border:none;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;margin-bottom:10px;transition:background 0.2s;";
         btnCopiar.addEventListener("click", function() {
             let ta = document.createElement("textarea");
             ta.value = texto;
@@ -331,7 +331,7 @@
             .catch(function (erro) {
                 console.error("[huawei] Falha na configuração:", erro);
                 try {
-                    mostrarToast("❌ Falha na configuração: " + (erro && erro.message ? erro.message : erro));
+                    mostrarToast("Falha na configuração: " + (erro && erro.message ? erro.message : erro));
                 } catch (e) { /* toast pode não existir ainda */ }
             })
             .finally(function () {

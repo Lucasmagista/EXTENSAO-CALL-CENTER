@@ -2,7 +2,7 @@
 
 Extensão do Google Chrome (Manifest V3) criada para agilizar o dia a dia de quem trabalha em call center: atalhos de digitação, snippets com áudio, relatos prontos, configuração de ramal e muito mais — tudo dentro do WhatsApp Web, Rocket.Chat e demais sites da Oquei.
 
-> Criado por **Mometto** e **Diogo — Magista**
+> Criado por **Mometto** e **Diogo — [Magista](https://www.magista.dev/)**
 
 ## Funcionalidades
 
@@ -23,10 +23,9 @@ Cada site pode ter a forma de acesso própria (Flutuante, Barra lateral ou Ambos
 
 ### 💬 Relatos / Mensagens
 - **Relatos**: painel de relatos prontos que injeta direto no editor da página (Rocket.Chat).
-- **Mensagens**: menu de mensagens rápidas para o WhatsApp Web.
+- **Mensagens**: menu de mensagens rápidas do WhatsApp Web, acessível de qualquer site (abre ou foca o WhatsApp automaticamente).
 
 ### 🔐 Atalhos de teclado
-- `Alt+P` — envia "prox" no grupo de rodízio.
 - `Alt+L` — envia ✅ no grupo de rodízio.
 - `Alt+X` — abre/fecha a barra lateral.
 
@@ -71,6 +70,10 @@ _Publicação em preparação._ Depois de publicada, a extensão atualiza automa
 | `quickreply.js` | Mensagens rápidas do WhatsApp Web |
 | `relatos.js` | Painel de relatos (injetado no MAIN world) |
 | `huaweiconfig.js` | Configuração do ramal x6 |
+| `PROX MODAL.html` / `prox-modal.js` | Modal do botão Enviar PROX (QR + grupos) |
+| `SUGESTOES MODAL.html` / `sugestoes-modal.js` | Modal de Sugestões (formulário completo + área do admin) |
+| `SUPORTE MODAL.html` / `suporte-modal.js` | Modal do admin (senha na modal de Sugestões): WhatsApp do suporte + grupo das sugestões |
+| `SENHA WIFI X6.html` / `senha-wifi-x6.js` | Decodificador de senha Wi-Fi (modal) |
 | `offscreen.html` / `offscreen.js` | Reprodução de áudio dos snippets |
 | `assets/` | Áudios, imagens e lista padrão de snippets |
 
@@ -95,7 +98,7 @@ Incrementa a `version` no `manifest.json` antes de publicar ou zipar.
 
 ## Segurança
 
-Esta extensão **não baixa nem executa código de fora do pacote publicado** e não faz nenhuma requisição de rede — todo o conteúdo (código, áudios e lista padrão de snippets) vem embutido. Os dados do usuário ficam apenas no `chrome.storage.local`. Veja [SECURITY.md](SECURITY.md) e [privacidade.html](privacidade.html).
+Esta extensão **não baixa nem executa código de fora do pacote publicado**. As requisições de rede são só de **dados**: (1) a **lista padrão de snippets** (JSON) do repositório oficial `Lucasmagista/EXTENSAO-CALL-CENTER`, com fallback para a cópia embutida, e (2) as chamadas REST da **Evolution API** em `whatsapp.hubly.software` usadas pelo botão **Enviar PROX** e pelo botão **Sugestões** (instância, QR Code, grupos e envio), apenas quando você usa o botão. A API Key do servidor vem embutida no pacote em `assets/prox-servidor.json` (arquivo local, gitignorado — fora do repositório público). Os dados do usuário ficam apenas no `chrome.storage.local`. Veja [SECURITY.md](SECURITY.md) e [privacidade.html](privacidade.html).
 
 ## Licença
 
@@ -103,5 +106,5 @@ Esta extensão **não baixa nem executa código de fora do pacote publicado** e 
 
 ## Contato
 
-- Issues: [github.com/lv777x/call-center-tools/issues](https://github.com/lv777x/call-center-tools/issues)
-- Criadores: Mometto e Diogo — Magista
+- Issues: [github.com/Lucasmagista/EXTENSAO-CALL-CENTER/issues](https://github.com/Lucasmagista/EXTENSAO-CALL-CENTER/issues)
+- Criadores: Mometto e Diogo — [Magista](https://www.magista.dev/)

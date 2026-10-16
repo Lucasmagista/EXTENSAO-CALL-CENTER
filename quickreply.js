@@ -1,13 +1,46 @@
 (function () {
     var overlay, panel;
 
+    // Escapa texto dinâmico antes de entrar em innerHTML (títulos de snippet
+    // vêm do storage da operadora — nunca confiar no texto cru).
+    function esc(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Remove painéis deixados por injeções anteriores (o botão Mensagens pode
+    // ser acionado várias vezes e de qualquer tela) — inclui o painel de relatos.
+    ['wpp-quickreply-panel', 'skx-proto-panel', 'skx-proto-ov'].forEach(function (id) {
+        var antigo = document.getElementById(id);
+        if (antigo && antigo.parentNode) antigo.parentNode.removeChild(antigo);
+    });
+
+    // Caixa alta (botão "Aa"): decide se a mensagem sai em MAIÚSCULAS ou como
+    // digitada. Estado em ccTools_maiusculas via relay da extensão.
+    var capsOn = false;
+    var btnAa = null;
+    function pintarBtnCaps() {
+        if (!btnAa) return;
+        btnAa.textContent = capsOn ? 'AA' : 'Aa';
+        btnAa.style.color = capsOn ? '#0b1220' : '#d8cbf5';
+        btnAa.style.background = capsOn ? '#42d3a5' : 'rgba(0,0,0,.25)';
+        btnAa.style.borderColor = capsOn ? '#42d3a5' : '#6c46b5';
+    }
+    window.addEventListener('cc-caps-estado', function (e) {
+        capsOn = !!(e && e.detail && e.detail.on);
+        pintarBtnCaps();
+    });
+
     function colar(m) {
         var c = document.getElementById('twemoji-textarea') || document.querySelector('[contenteditable="true"]');
         fechar();
+        if (c && capsOn) m = m.toUpperCase();
         if (!c) { mostrarAviso('Clique no campo de texto do WhatsApp antes de usar.'); return; }
         c.focus();
         c.textContent = m;
         ['input', 'keyup', 'change'].forEach(function (t) { c.dispatchEvent(new Event(t, { bubbles: true })); });
+        // Som de confirmação: o relay (snippets-content / background) repassa
+        // ao background tocar o "ding" no volume do popup.
+        window.dispatchEvent(new CustomEvent('cc-notificacao-sucesso'));
     }
 
     function getNome() {
@@ -39,10 +72,29 @@
         overlay.style.cssText = 'position:fixed;inset:0;background:transparent;z-index:2147483647;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;';
         
         panel = document.createElement('div');
-        panel.style.cssText = 'background:linear-gradient(145deg, #4a2c82, #29154f) !important;border:1px solid #6c46b5 !important;border-radius:12px !important;box-shadow:0 16px 60px rgba(0,0,0,.6) !important;overflow:hidden !important;width:360px !important;max-height:80vh !important;display:flex !important;flex-direction:column !important;';
-        
+        panel.style.cssText = 'position:relative !important;background:linear-gradient(145deg, #4a2c82, #29154f) !important;border:1px solid #6c46b5 !important;border-radius:12px !important;box-shadow:0 16px 60px rgba(0,0,0,.6) !important;overflow:hidden !important;width:360px !important;max-height:80vh !important;display:flex !important;flex-direction:column !important;animation:qr-ent .22s ease !important;';
+
+        if (!document.getElementById('qr-ent-style')) {
+            var st = document.createElement('style');
+            st.id = 'qr-ent-style';
+            st.textContent = '@keyframes qr-ent{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}';
+            document.documentElement.appendChild(st);
+        }
+
+        // Botão "Aa": alterna entre mandar a mensagem em MAIÚSCULAS ou como digitada
+        btnAa = document.createElement('button');
+        btnAa.type = 'button';
+        btnAa.title = 'Alternar caixa alta: quando ligado (AA), a mensagem sai em MAIÚSCULAS';
+        btnAa.textContent = 'Aa';
+        btnAa.style.cssText = 'position:absolute;top:12px;right:12px;padding:5px 10px !important;border:1px solid #6c46b5 !important;border-radius:6px !important;background:rgba(0,0,0,.25) !important;color:#d8cbf5 !important;font:700 12px/1 system-ui,sans-serif !important;cursor:pointer !important;z-index:3 !important;transition:all .15s !important;';
+        btnAa.onclick = function () { window.dispatchEvent(new CustomEvent('cc-caps-alternar')); };
+        pintarBtnCaps();
+        panel.appendChild(btnAa);
+
         overlay.appendChild(panel);
         document.body.appendChild(overlay);
+        // Pede o estado do "Aa" ao relay da extensão (resposta em cc-caps-estado)
+        window.dispatchEvent(new CustomEvent('cc-caps-pedir'));
         // Escape fecha o painel (o overlay transparente não fecha ao clicar fora)
         document.addEventListener('keydown', function onEsc(ev) {
             if (ev.key !== 'Escape') return;
@@ -60,7 +112,7 @@
     function menuHeader(titulo, sub) {
         var h = document.createElement('div');
         h.style.cssText = 'padding:18px 16px 4px !important;text-align:center !important;';
-        h.innerHTML = '<div style="color:#42d3a5;font-size:16px;font-weight:700;">' + titulo + '</div>' + (sub ? '<div style="color:#d1d5db;font-size:13px;margin-top:4px;">' + sub + '</div>' : '');
+        h.innerHTML = '<div style="color:#42d3a5;font-size:16px;font-weight:700;">' + esc(titulo) + '</div>' + (sub ? '<div style="color:#d1d5db;font-size:13px;margin-top:4px;">' + esc(sub) + '</div>' : '');
         panel.appendChild(h);
     }
 
@@ -68,7 +120,7 @@
         var inp = document.createElement('input');
         inp.type = 'text';
         inp.placeholder = 'Digite o número e pressione Enter...';
-        inp.style.cssText = 'margin:12px 16px 8px !important;width:calc(100% - 32px) !important;background:rgba(0,0,0,0.25) !important;border:1px solid #6c46b5 !important;border-radius:6px !important;padding:10px 14px !important;color:#ffffff !important;font-size:13px !important;outline:none !important;box-sizing:border-box !important;transition:all 0.2s ease !important;';
+        inp.style.cssText = 'margin:12px 16px 8px !important;width:calc(100% - 32px) !important;background:rgba(0,0,0,0.25) !important;border:1px solid #6c46b5 !important;border-radius:6px !important;padding:10px 14px !important;color:#ffffff !important;font-size:13px !important;outline:none !important;box-sizing:border-box !important;transition:all 0.2s ease !important;text-transform:none !important;';
         
         inp.onfocus = function () { inp.style.setProperty('border-color', '#42d3a5', 'important'); };
         inp.onblur = function () { inp.style.setProperty('border-color', '#6c46b5', 'important'); };
@@ -102,7 +154,7 @@
         var list = getListContainer();
         var el = document.createElement('div');
         el.style.cssText = 'display:flex;align-items:center;gap:10px;padding:12px 16px !important;border-bottom:1px solid rgba(255,255,255,0.06) !important;cursor:pointer !important;font-size:14px !important;color:#e6e6e6 !important;transition:all 0.15s !important;';
-        el.innerHTML = '<span style="color:#a88be8;font-weight:600;min-width:18px;">' + num + ' -</span><span>' + nome + '</span>';
+        el.innerHTML = '<span style="color:#a88be8;font-weight:600;min-width:18px;">' + num + ' -</span><span>' + esc(nome) + '</span>';
         
         el.addEventListener('mouseenter', function () {
             el.style.setProperty('background', '#42d3a5', 'important');
@@ -182,7 +234,7 @@
         var inp = document.createElement('input');
         inp.type = 'text';
         inp.placeholder = placeholder;
-        inp.style.cssText = 'width:100% !important;background:rgba(0,0,0,0.25) !important;border:1px solid #6c46b5 !important;border-radius:6px !important;padding:10px 14px !important;color:#ffffff !important;font-size:14px !important;outline:none !important;box-sizing:border-box !important;transition:all 0.2s ease !important;';
+        inp.style.cssText = 'width:100% !important;background:rgba(0,0,0,0.25) !important;border:1px solid #6c46b5 !important;border-radius:6px !important;padding:10px 14px !important;color:#ffffff !important;font-size:14px !important;outline:none !important;box-sizing:border-box !important;transition:all 0.2s ease !important;text-transform:none !important;';
         inp.onfocus = function () { inp.style.setProperty('border-color', '#42d3a5', 'important'); };
         inp.onblur = function () { inp.style.setProperty('border-color', '#6c46b5', 'important'); };
         

@@ -15,7 +15,7 @@
 </head>
 <body>
   <h1>Política de Privacidade</h1>
-  <p class="muted">Extensão <strong>CallCenter - TOOLS</strong> para Google Chrome · Última atualização: 13 de outubro de 2026</p>
+  <p class="muted">Extensão <strong>CallCenter - TOOLS</strong> para Google Chrome · Última atualização: 15 de outubro de 2026</p>
 
   <h2>Resumo</h2>
   <p>A extensão CallCenter - TOOLS foi feita para agilizar o trabalho de atendentes de call center. Ela <strong>não coleta, não envia e não compartilha dados pessoais</strong>. Todos os dados ficam armazenados localmente, no seu próprio navegador.</p>
@@ -24,24 +24,33 @@
   <p>Tudo é salvo localmente no armazenamento do Chrome (<code>chrome.storage.local</code>), no seu computador:</p>
   <ul>
     <li>Snippets (frases prontas) criados ou editados por você</li>
-    <li>Volume do áudio dos snippets</li>
+    <li>Volume dos sons (áudios dos snippets e notificação de comando)</li>
+    <li>Som de confirmação personalizado (o arquivo de áudio que você escolher, guardado só neste navegador)</li>
     <li>Posição dos botões da interface</li>
     <li>Preferências de modo (botão flutuante / barra lateral) por site</li>
     <li>Sites que você liberou para uso dos snippets</li>
     <li>Lista de snippets padrão que você optou por ignorar</li>
+    <li>Configuração do botão PROX: instância, grupo escolhido e mensagem (padrão "prox"). A API Key do servidor de Zap já vem embutida no próprio pacote de instalação (arquivo local, fora do repositório público); se você usar "Alterar API Key", a chave digitada fica salva <strong>só neste navegador</strong> e é usada unicamente para autenticar no seu servidor</li>
   </ul>
-  <p>Esses dados <strong>nunca são enviados</strong> a servidores nossos ou de terceiros. Apagar a extensão apaga todos eles.</p>
+  <p>Esses dados <strong>nunca são enviados</strong> a servidores nossos ou de terceiros (a única exceção é a API Key, enviada ao <strong>seu próprio servidor</strong> de Zap). Apagar a extensão apaga todos eles.</p>
 
   <h2>Comunicações de rede</h2>
-  <p>A extensão <strong>não faz requisições a servidores externos</strong>. Todo o conteúdo (código, áudios e lista padrão de snippets) faz parte do pacote instalado no seu navegador. Não há telemetria, rastreamento, anúncios ou análise de comportamento.</p>
+  <p>A extensão faz <strong>duas</strong> requisições de rede, ambas apenas quando você usa a função correspondente:</p>
+  <ul>
+    <li><strong>Lista padrão de snippets</strong> (um arquivo JSON de dados, sem código) do repositório público oficial <code>github.com/Lucasmagista/EXTENSAO-CALL-CENTER</code>, quando você clica em "Atualizar padrão" ou automaticamente a cada 60 minutos. Se o GitHub estiver indisponível, a cópia que vem embutida no pacote é usada.</li>
+    <li><strong>Botão PROX</strong>: chamadas REST ao seu servidor Evolution em <code>whatsapp.hubly.software</code> (criar instância, gerar QR Code, listar seus grupos, enviar a mensagem escolhida e desconectar). Só essas ações, no momento em que você usar o botão; nenhum dado de terceiros é transmitido e nenhum código é baixado. A autenticação usa a API Key que vem no pacote de instalação.</li>
+    <li><strong>Botão Sugestões</strong>: abre uma modal com o formulário (função, nome, email, setor, período e descrição) e usa as mesmas chamadas REST do PROX para entregar a mensagem padrão ao grupo de suporte no WhatsApp — só quando você clica em "Enviar sugestão". O email entra na mensagem apenas se você preencher (a mensagem deixa claro se ele foi adicionado ou não). Sem grupo configurado, o texto é copiado para a sua área de transferência, sem nenhuma requisição. O admin (senha dentro da própria modal) pode abrir a modal do suporte para conectar o WhatsApp da equipe e escolher esse grupo — mesma API Key, instância própria.</li>
+  </ul>
+  <p>Não há telemetria, rastreamento, anúncios ou análise de comportamento.</p>
 
   <h2>Permissões e o que significam</h2>
   <ul>
     <li><strong>Abas (tabs)</strong> e <strong>scripting</strong>: para inserir os botões e painéis da extensão nas páginas de atendimento que você usa (WhatsApp Web e Rocket.Chat).</li>
     <li><strong>activeTab</strong>: para agir na aba ativa somente quando você clica no ícone da extensão.</li>
     <li><strong>storage</strong>: para salvar localmente suas preferências e snippets.</li>
-    <li><strong>offscreen</strong>: para reproduzir os áudios dos snippets em segundo plano.</li>
-    <li><strong>Permissões de site</strong>: restritas aos sites de atendimento; sites extras só são liberados mediante pedido e aceitação sua.</li>
+    <li><strong>offscreen</strong>: para reproduzir em segundo plano os áudios dos snippets, o som de confirmação tocado quando um comando é usado no chat e o som personalizado que você escolher.</li>
+    <li><strong>alarms</strong>: para atualizar a lista padrão de snippets do GitHub a cada 60 minutos.</li>
+    <li><strong>Permissões de site</strong>: restritas aos sites de atendimento; sites extras só são liberados mediante pedido e aceitação sua; acesso ao GitHub apenas para baixar a lista padrão de snippets; acesso ao seu servidor de Zap (<code>whatsapp.hubly.software</code>) apenas para as ações do botão PROX.</li>
   </ul>
 
   <h2>Menção a marcas de terceiros</h2>
@@ -54,6 +63,6 @@
   <p>Qualquer mudança será publicada nesta mesma página, com a data da última atualização ajustada.</p>
 
   <h2>Contato</h2>
-  <p>Dúvidas sobre privacidade: abra uma issue em <a href="https://github.com/lv777x/call-center-tools">github.com/lv777x/call-center-tools</a> ou fale com os mantenedores (Mometto e Diogo — Magista).</p>
+  <p>Dúvidas sobre privacidade: abra uma issue em <a href="https://github.com/Lucasmagista/EXTENSAO-CALL-CENTER">github.com/Lucasmagista/EXTENSAO-CALL-CENTER</a> ou fale com os mantenedores (Mometto e Diogo — <a href="https://www.magista.dev/">Magista</a>).</p>
 </body>
 </html>

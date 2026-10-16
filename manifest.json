@@ -1,15 +1,19 @@
 {
   "manifest_version": 3,
   "name": "CallCenter - TOOLS",
-  "version": "1.19",
+  "version": "1.22",
   "description": "Ferramenta para facilitar o trabalho do Call.",
-  "homepage_url": "https://github.com/lv777x/call-center-tools",
+  "homepage_url": "https://github.com/Lucasmagista/EXTENSAO-CALL-CENTER",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
   "permissions": [
     "tabs",
     "scripting",
     "activeTab",
     "storage",
-    "offscreen"
+    "offscreen",
+    "alarms"
   ],
   "optional_host_permissions": [
     "http://*/*",
@@ -19,7 +23,9 @@
     "https://chat.oquei.com.br/*",
     "https://web.whatsapp.com/*",
     "https://elleven.oquei.com.br/*",
-    "https://oquei.sz.chat/*"
+    "https://oquei.sz.chat/*",
+    "https://raw.githubusercontent.com/*",
+    "https://whatsapp.hubly.software/*"
   ],
   "web_accessible_resources": [
     {
@@ -45,7 +51,22 @@
       ],
       "js": [
         "ferramentas-comuns.js",
-        "snippets-content.js",
+        "snippets-content.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true,
+      "match_about_blank": true,
+      "match_origin_as_fallback": true
+    },
+    {
+      "matches": [
+        "https://web.whatsapp.com/*",
+        "https://chat.oquei.com.br/*",
+        "https://elleven.oquei.com.br/*",
+        "https://oquei.sz.chat/*"
+      ],
+      "js": [
+        "ferramentas-comuns.js",
         "botao-flutuante.js",
         "barra-lateral.js"
       ],
@@ -53,10 +74,7 @@
         "botao-flutuante.css",
         "barra-lateral.css"
       ],
-      "run_at": "document_idle",
-      "all_frames": true,
-      "match_about_blank": true,
-      "match_origin_as_fallback": true
+      "run_at": "document_idle"
     }
   ],
   "icons": {
@@ -75,17 +93,17 @@
     }
   },
   "commands": {
-    "send-prox": {
-      "suggested_key": {
-        "default": "Alt+P"
-      },
-      "description": "Enviar 'prox' no grupo rodizio_ligacoes_callcenter_tarde"
-    },
     "send-check": {
       "suggested_key": {
         "default": "Alt+L"
       },
       "description": "Enviar ✅ no grupo rodizio_ligacoes_callcenter_tarde"
+    },
+    "send-prox": {
+      "suggested_key": {
+        "default": "Alt+P"
+      },
+      "description": "Enviar PROX no grupo do WhatsApp"
     },
     "abrir-barra-lateral": {
       "suggested_key": {

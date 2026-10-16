@@ -5,6 +5,43 @@
   if (window.__cctoolsSnippetsAtivo) return;
   window.__cctoolsSnippetsAtivo = true;
 
+  // Som de confirmação de comando: painéis em MAIN world (resposta rápida,
+  // relatos e envio ✅) disparam "cc-notificacao-sucesso" na página e aqui
+  // repassamos ao background, que toca no volume do slider do popup.
+  // Mesma guarda usada por background.injetarRelayNotificacao() — registra
+  // uma vez só, mesmo quando os dois caminhos tentam instalar o relay.
+  if (!window.__ccNotificacaoRelay) {
+    window.__ccNotificacaoRelay = true;
+    window.addEventListener("cc-notificacao-sucesso", function () {
+      try {
+        if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
+          chrome.runtime.sendMessage({ type: "playNotificacao" }).catch(function () {});
+        }
+      } catch (err) { /* contexto da extensão recarregado no meio da aba */ }
+    });
+    // Caixa alta (botão "Aa" dos painéis relatos/mensagens): estado em
+    // ccTools_maiusculas — o relay lê/grava porque o painel está no MAIN world.
+    function lerCaps(cb) {
+      try {
+        chrome.storage.local.get(["ccTools_maiusculas"], function (res) {
+          cb(!!(res && res.ccTools_maiusculas));
+        });
+      } catch (err) { cb(false); }
+    }
+    window.addEventListener("cc-caps-pedir", function () {
+      lerCaps(function (on) {
+        window.dispatchEvent(new CustomEvent("cc-caps-estado", { detail: { on: on } }));
+      });
+    });
+    window.addEventListener("cc-caps-alternar", function () {
+      lerCaps(function (on) {
+        var novo = !on;
+        try { chrome.storage.local.set({ ccTools_maiusculas: novo }); } catch (err) { /* storage indisponível */ }
+        window.dispatchEvent(new CustomEvent("cc-caps-estado", { detail: { on: novo } }));
+      });
+    });
+  }
+
   var STORAGE_KEY = "ccTools_snippets";
   var TAG = "[CCTools Snippets]";
   var snippetsMap = {};
@@ -13,16 +50,23 @@
   var ultimoTempoExpandido = 0;
   var COOLDOWN_MS = 500;
 
-  // Função isolada para tocar som sem bloquear o código principal
-  function tocarSom() {
+  // Toca o áudio configurado no snippet (se houver) ou o som de confirmação
+  // padrão — ambos no volume do slider do popup. Sem bloquear o código principal.
+  function tocarSom(snippet) {
     setTimeout(function() {
       try {
         if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
           // Usa a promessa nativa do Manifest V3 para capturar erros silenciosamente
-          chrome.runtime.sendMessage({ 
-            type: "playSnippetAudio", 
-            audio: "bonk-djlunatique.com_.mp3" 
-          }).catch(function() { /* Ignora erros de conexão no console */ });
+          if (snippet && snippet.audio) {
+            chrome.runtime.sendMessage({
+              type: "playSnippetAudio",
+              audio: snippet.audio
+            }).catch(function() { /* Ignora erros de conexão no console */ });
+          } else {
+            chrome.runtime.sendMessage({
+              type: "playNotificacao"
+            }).catch(function() { /* Ignora erros de conexão no console */ });
+          }
         }
       } catch (err) {
         console.log(TAG, "Erro isolado no áudio:", err);
@@ -39,7 +83,8 @@
       var arr = Array.isArray(res[STORAGE_KEY]) ? res[STORAGE_KEY] : [];
       snippetsMap = {};
       arr.forEach(function (s) {
-        if (s && s.atalho) snippetsMap[s.atalho.toLowerCase()] = s.conteudo || "";
+        // guarda o objeto inteiro (conteudo + audio) para o tocarSom()
+        if (s && s.atalho) snippetsMap[s.atalho.toLowerCase()] = s;
       });
       console.log(TAG, "atalhos carregados:", Object.keys(snippetsMap));
     });
@@ -132,7 +177,7 @@
     sel.addRange(range);
   }
 
-  function expandir(el, textoSnippet, charsToApagar) {
+  function expandir(el, snippet, charsToApagar) {
     var agora = Date.now();
     if (el === ultimoElExpandido && (agora - ultimoTempoExpandido) < COOLDOWN_MS) {
       return;
@@ -140,6 +185,7 @@
     ultimoElExpandido = el;
     ultimoTempoExpandido = agora;
 
+    var textoSnippet = snippet && snippet.conteudo ? snippet.conteudo : "";
     bloqueado = true;
     
     // O bloco TRY...FINALLY garante que o sistema de colagem nunca fica bloqueado em caso de erro
@@ -195,7 +241,7 @@
             }
         }
 
-        tocarSom();
+        tocarSom(snippet);
         console.log(TAG, "snippet expandido.");
 
     } catch (erroGeral) {

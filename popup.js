@@ -91,10 +91,6 @@ document.getElementById("btn-voltar-links").addEventListener("click", () => {
 // ==========================================
 // FUNÇÕES DOS BOTÕES DA TELA PRINCIPAL
 // ==========================================
-document.getElementById("btnProx").addEventListener("click", () => {
-  send("prox", "prox");
-});
-
 document.getElementById("btnCheck").addEventListener("click", () => {
   send("\u2705", "check");
 });
@@ -141,6 +137,90 @@ document.getElementById("btnSenhaWifi").addEventListener("click", () => {
 });
 
 // ==========================================
+// ENVIAR PROX (botão dividido: enviar + configuração)
+// ==========================================
+const btnProxEnviar = document.getElementById("btnProxEnviar");
+const btnProxConfig = document.getElementById("btnProxConfig");
+let proxInfo = { temChave: false, conectado: false, grupoNome: null };
+
+// Ícone Lucide do sprite do popup.html (mesmos SVGs do animateicons)
+function svgIco(nome) {
+  return '<svg class="ico" aria-hidden="true"><use href="#i-' + nome + '"/></svg>';
+}
+
+function pintarEstadoProx() {
+  btnProxEnviar.dataset.conectado = proxInfo.conectado ? "1" : "0";
+  const lbl = document.getElementById("lblProxEnviar");
+  const icoOk = document.getElementById("icoProxOk");
+  if (lbl) lbl.textContent = "Enviar PROX";
+  if (icoOk) icoOk.classList.toggle("oculto", !proxInfo.conectado);
+  if (proxInfo.conectado) {
+    btnProxEnviar.title = "Conectado — envia \"" + (proxInfo.texto || "prox") + "\" em: " +
+      (proxInfo.grupoNome || "grupo não escolhido");
+  } else {
+    btnProxEnviar.title = proxInfo.temChave
+      ? "WhatsApp desconectado — clique para escanear o QR"
+      : "Conecte o servidor de Zap (clique)";
+  }
+}
+
+// Estado real (servidor) ao abrir a popup — falha de rede não quebra a UI
+chrome.runtime.sendMessage({ type: "proxEstado" }, (resp) => {
+  if (chrome.runtime.lastError || !resp) return;
+  proxInfo = resp;
+  pintarEstadoProx();
+});
+
+// Abre a modal na aba ativa (mesmo caminho do botão Senha Wi-Fi x6)
+function abrirModalProx(mensagem) {
+  setStatus(mensagem || "Abrindo PROX...");
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tab = tabs && tabs[0];
+    if (!tab || tab.id == null) {
+      setStatus("Nenhuma aba ativa encontrada.");
+      return;
+    }
+    chrome.runtime.sendMessage({ type: "mostrarModalProx", tabId: tab.id }, (resp) => {
+      if (chrome.runtime.lastError || !resp || !resp.ok) {
+        setStatus((resp && resp.error) ||
+          (chrome.runtime.lastError && chrome.runtime.lastError.message) ||
+          "Abra o WhatsApp Web ou o chat da empresa.");
+        setTimeout(() => setStatus(""), 3500);
+        return;
+      }
+      fecharSePopup();
+    });
+  });
+}
+
+btnProxEnviar.addEventListener("click", () => {
+  setStatus("Enviando PROX...");
+  chrome.runtime.sendMessage({ type: "proxAcao" }, (resp) => {
+    if (chrome.runtime.lastError) {
+      setStatus("Erro: " + chrome.runtime.lastError.message);
+      return;
+    }
+    if (resp && resp.ok) {
+      setStatus("PROX enviado para " + resp.grupo + "!");
+      setTimeout(() => setStatus(""), 3000);
+      return;
+    }
+    if (resp && resp.abrir) {
+      abrirModalProx(resp.error
+        ? resp.error
+        : "Conecte o WhatsApp para enviar o PROX...");
+      return;
+    }
+    setStatus((resp && resp.error) || "Falha ao enviar.");
+    setTimeout(() => setStatus(""), 3500);
+  });
+});
+
+btnProxConfig.addEventListener("click", () => {
+  abrirModalProx("Abrindo configuração do PROX...");
+});
+
+// ==========================================
 // PREVENÇÃO DE BUG (FECHAR TELAS SOBREPOSTAS)
 // ==========================================
 // Esta função força o fechamento de qualquer painel de mensagem/relato
@@ -184,29 +264,30 @@ document.getElementById("btn-relatos").addEventListener("click", () => {
   });
 });
 
-// Aciona a ferramenta antiga de mensagens via background
+// Mensagens rápidas: funciona de QUALQUER tela. O painel abre na aba ativa —
+// a extensão não abre nem foca aba do WhatsApp Web.
 document.getElementById("btn-mensagens").addEventListener("click", () => {
   setStatus("Abrindo mensagens...");
-  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    if (chrome.runtime.lastError || !tabs || !tabs[0]) {
-      setStatus("Nenhuma aba ativa encontrada.");
+  chrome.runtime.sendMessage({ type: "runQuickReplyMenu" }, (resp) => {
+    if (chrome.runtime.lastError) {
+      setStatus("Erro: " + chrome.runtime.lastError.message);
       return;
     }
-    const url = tabs[0].url || "";
-    if (!url.startsWith("https://web.whatsapp.com/")) {
-      setStatus("Abra o WhatsApp Web para usar as mensagens rápidas.");
-      return;
-    }
-    fecharPaineisAbertos(tabs[0].id, () => {
-      chrome.runtime.sendMessage({ type: "runQuickReplyMenu" });
+    if (resp && resp.ok) {
       fecharSePopup();
-    });
+      return;
+    }
+    setStatus((resp && resp.error) || "Não foi possível abrir as mensagens.");
+    setTimeout(() => setStatus(""), 4000);
   });
 });
 
 // ==========================================
-// VOLUME DO ÁUDIO DOS SNIPPETS
+// VOLUME DOS SNIPPETS E DA NOTIFICAÇÃO DE COMANDO
 // ==========================================
+// Regula tanto o áudio dos snippets quanto o "ding" de confirmação tocado
+// quando um comando insere/envia mensagem no chat (quickreply, relatos,
+// snippets e fluxo ✅).
 const VOLUME_STORAGE_KEY = "ccTools_volume";
 const rangeVolume = document.getElementById("rangeVolume");
 const volumeValor = document.getElementById("volumeValor");
@@ -225,6 +306,110 @@ rangeVolume.addEventListener("input", () => {
   const v = Number(rangeVolume.value);
   mostrarVolume(v);
   chrome.storage.local.set({ [VOLUME_STORAGE_KEY]: v });
+});
+
+// ==========================================
+// SOM DE CONFIRMAÇÃO PERSONALIZADO
+// ==========================================
+// A operadora pode trocar o "ding" padrão por um arquivo de áudio dela
+// (MP3/WAV/OGG até 500 KB). O arquivo vira data URL e fica só no
+// chrome.storage.local deste navegador; o background toca ele quando houver
+// e cai no sintetizado padrão quando não houver.
+const SOM_CUSTOM_KEY = "ccTools_somCustom";
+const SOM_NOME_KEY = "ccTools_somCustomNome";
+const SOM_LIMITE = 500 * 1024;
+const somValor = document.getElementById("somValor");
+const btnSomPadrao = document.getElementById("btnSomPadrao");
+const inputSom = document.getElementById("inputSom");
+
+function mostrarSomAtual(nome) {
+  const tem = !!nome;
+  somValor.textContent = tem ? nome : "padrão";
+  somValor.title = tem ? "Som personalizado: " + nome : "Ding padrão da extensão";
+  btnSomPadrao.classList.toggle("oculto", !tem);
+}
+
+chrome.storage.local.get([SOM_NOME_KEY], (res) => mostrarSomAtual(res[SOM_NOME_KEY] || ""));
+
+document.getElementById("btnEscolherSom").addEventListener("click", () => inputSom.click());
+
+inputSom.addEventListener("change", () => {
+  const arquivo = inputSom.files && inputSom.files[0];
+  inputSom.value = "";
+  if (!arquivo) return;
+  if (arquivo.size > SOM_LIMITE) {
+    setStatus("Arquivo grande demais (máx. 500 KB). Escolha um menor.");
+    setTimeout(() => setStatus(""), 3500);
+    return;
+  }
+  if (arquivo.type && !/^audio\//.test(arquivo.type) && !/\.(mp3|wav|ogg|m4a|aac|webm)$/i.test(arquivo.name || "")) {
+    setStatus("Escolha um arquivo de áudio (mp3, wav, ogg, m4a, aac ou webm).");
+    setTimeout(() => setStatus(""), 3500);
+    return;
+  }
+  const leitor = new FileReader();
+  leitor.onload = () => {
+    // readAsDataURL de áudio sempre resulta em data:audio/ — confere antes de
+    // guardar no storage (o background e o offscreen exigem o mesmo prefixo).
+    const base64 = String(leitor.result);
+    if (!base64.startsWith("data:audio/")) {
+      setStatus("Arquivo inválido — só áudio (mp3, wav, ogg, m4a, aac ou webm).");
+      setTimeout(() => setStatus(""), 3500);
+      return;
+    }
+    chrome.storage.local.set({ [SOM_CUSTOM_KEY]: base64, [SOM_NOME_KEY]: arquivo.name }, () => {
+      mostrarSomAtual(arquivo.name);
+      setStatus("Som personalizado salvo — já vale nos próximos comandos.");
+      setTimeout(() => setStatus(""), 2500);
+    });
+  };
+  leitor.onerror = () => {
+    setStatus("Não consegui ler esse arquivo. Tente outro.");
+    setTimeout(() => setStatus(""), 3500);
+  };
+  leitor.readAsDataURL(arquivo);
+});
+
+btnSomPadrao.addEventListener("click", () => {
+  chrome.storage.local.remove([SOM_CUSTOM_KEY, SOM_NOME_KEY], () => {
+    mostrarSomAtual("");
+    setStatus("Som padrão restaurado.");
+    setTimeout(() => setStatus(""), 2500);
+  });
+});
+
+document.getElementById("btnOuvirSom").addEventListener("click", () => {
+  chrome.runtime.sendMessage({ type: "playNotificacao" }).catch(() => {});
+});
+
+// ==========================================
+// SUGESTÕES (modal na aba ativa)
+// ==========================================
+// O botão abre a modal "Sugestões" na aba ativa (mesmo caminho do PROX): o
+// formulário completo (função, nome obrigatório, email, setor, período e o
+// que quer adicionar) mora na modal; o background monta a mensagem padrão
+// e envia para o grupo do suporte pela Evolution API. Se o grupo ainda não
+// estiver configurado, o texto pronto é copiado para a área de transferência
+// — o fluxo nunca trava. A área do admin (senha) também fica na modal.
+document.getElementById("btnSugestoes").addEventListener("click", () => {
+  setStatus("Abrindo Sugestões...");
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tab = tabs && tabs[0];
+    if (!tab || tab.id == null) {
+      setStatus("Nenhuma aba ativa encontrada.");
+      return;
+    }
+    chrome.runtime.sendMessage({ type: "mostrarModalSugestoes", tabId: tab.id }, (resp) => {
+      if (chrome.runtime.lastError || !resp || !resp.ok) {
+        setStatus((resp && resp.error) ||
+          (chrome.runtime.lastError && chrome.runtime.lastError.message) ||
+          "Abra o WhatsApp Web ou o chat da empresa.");
+        setTimeout(() => setStatus(""), 3500);
+        return;
+      }
+      fecharSePopup();
+    });
+  });
 });
 
 // ==========================================
@@ -261,11 +446,11 @@ function mostrarInfoSite(origem, ehBase, temPermissao) {
     return;
   }
   if (ehBase || temPermissao) {
-    siteTexto.textContent = "✅ Snippets ativos neste site.";
+    siteTexto.innerHTML = svgIco("check") + " Snippets ativos neste site.";
     if (!ehBase) mostrar(btnRemoverSite);
     return;
   }
-  siteTexto.textContent = "💬 Quer usar snippets neste site também?";
+  siteTexto.innerHTML = svgIco("message-circle") + " Quer usar snippets neste site também?";
   mostrar(btnPermitirSite);
 }
 
@@ -339,15 +524,15 @@ const SITES_BASE_NOMES = {
   "https://oquei.sz.chat": "sz.chat"
 };
 const DICAS_PADRAO = {
-  flutuante: "Um botão 🧩 arrastável aparece nas páginas liberadas.",
-  lateral: "Um gatilho 🧰 integrado na página abre o painel de ferramentas.",
-  ambos: "Gatilho 🧰 integrado + botão 🧩 arrastável nas páginas."
+  flutuante: "Um botão arrastável aparece nas páginas liberadas.",
+  lateral: "Um gatilho integrado na página abre o painel de ferramentas.",
+  ambos: "Gatilho integrado + botão arrastável nas páginas."
 };
 const ROTULOS_MODO = {
   padrao: "Usar padrão",
-  flutuante: "🧩 Flutuante",
-  lateral: "📐 Barra lateral",
-  ambos: "🔀 Ambos"
+  flutuante: "Flutuante",
+  lateral: "Barra lateral",
+  ambos: "Ambos"
 };
 
 const telaConfig = document.getElementById("tela-config");

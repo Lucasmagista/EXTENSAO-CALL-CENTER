@@ -2,6 +2,23 @@
     var PID='skx-proto-panel';
     var old=document.getElementById(PID);
     if(old){old.remove();return;}
+
+    // Caixa alta (botão "Aa"): decide se o relato sai em MAIÚSCULAS ou como
+    // digitado. O estado fica em ccTools_maiusculas (chrome.storage) e este
+    // painel, que roda no MAIN world, conversa com o relay da extensão.
+    var capsOn=false;
+    var btnAa=null;
+    function pintarBtnCaps(){
+        if(!btnAa){return;}
+        btnAa.textContent=capsOn?'AA':'Aa';
+        btnAa.style.color=capsOn?'#0b1220':'#d8cbf5';
+        btnAa.style.background=capsOn?'#42d3a5':'rgba(0,0,0,.25)';
+        btnAa.style.borderColor=capsOn?'#42d3a5':'#6c46b5';
+    }
+    window.addEventListener('cc-caps-estado',function(e){
+        capsOn=!!(e&&e.detail&&e.detail.on);
+        pintarBtnCaps();
+    });
     
     var MENU=[{t:'Financeiro',items:[{t:'Desbloqueio por Confiança',m:'Cliente solicita desbloqueio por confiança.\n\nInformado ao mesmo que o desbloqueio ocorre por **3 dias** e que, se após essa data o pagamento não for efetuado, o **bloqueio acontece novamente**, sendo a liberação possível apenas **mediante o comprovante de pagamento**.'},{t:'2ª Via de Boleto',m:'Cliente entrou em contato solicitando segunda via de boleto.\n\n**Encaminhada a segunda via ao mesmo.**\n\nAtendimento encerrado.'},{t:'Liberação após Pagamento',m:'Cliente entrou em contato informando pagamento da fatura e solicitando liberação da conexão.\n\nInformado ao mesmo que a liberação ocorre de forma automática em **até 10 minutos** após a compensação do pagamento.\n\nConfirmado em sistema que o **pagamento já foi baixado e o contrato encontra-se liberado**.'}]},{t:'Suporte',items:[{t:'Troca de Senha do Wi-Fi',m:'Cliente entrou em contato solicitando a troca da senha do Wi-Fi.\n\nConfirmados os dados de segurança com o cliente e **senha alterada com sucesso**.\n\n**Nova senha:** {{SENHA}}\n\nCliente confirma que a conexão foi estabelecida normalmente.'},{t:'Conexão',items:[{t:'Link Loss',m:'Cliente entrou em contato relatando estar sem conexão.\nVerificamos que constava erro de "link loss".\nSolicitamos o teste do cordão óptico, porém não houve sucesso.\nDiante da situação, encaminhando para visita técnica.\nHorário pré-agendado com o cliente.\nOrientado sobre maior de idade para receber os técnicos.\nAtendimento finalizado.'},{t:'TV Box',m:'Cliente em contato relatando utilização de dispositivo TV Box/IPTV na rede. Cliente orientado de que o serviço contratado não possui homologação para operação com esse tipo de equipamento, podendo ocasionar instabilidades não cobertas por suporte técnico.\n\nCliente compreendeu a orientação prestada, sem questionamentos adicionais.\n\nAtendimento finalizado.'},{t:'Não Havia Problema',m:'Cliente em contato relatando ausência de conexão.\n\nRealizada verificação na plataforma de monitoramento, não sendo identificadas anormalidades ou falhas no link do cliente.\n\nDurante o atendimento, foi constatada a reautenticação da conexão, normalizando o acesso.\n\nOrientado o cliente a testar a navegação após a reautenticação.\n\nAtendimento finalizado.'}]},{t:'Serviços Digitais',items:[{t:'OQUEI TV',m:'Cliente entrou em contato solicitando dados de acesso da OQUEI TV.\n\nInformados ao mesmo os dados de acesso.\n\nUsuário: **{{CPF}}**\nSenha: **{{CPF}}**\n\nCliente informa que conseguiu conectar normalmente.'},{t:'Globo Play',m:'Cliente entrou em contato solicitando ativação da Globo Play.\n\n**Reencaminhado link de ativação via e-mail.**\n\nCliente informa que recebeu e **conseguiu vincular a conta normalmente**.'},{t:'OQUEI Saúde',m:'Cliente entrou em contato solicitando a ativação do OQUEI Saúde.\n\n**Encaminhado ao cliente o manual com o passo a passo** e gerado o código de ativação: **{{CÓDIGO}}**\n\nCliente informa que conseguiu realizar a conexão normalmente.'},{t:'Deezer',m:'Cliente entrou em contato o mesmo pedindo o acesso ao Deezer.\nDados confirmados, encaminhado o link de ativação, o mesmo conseguiu o acesso ao serviço.\nAtendimento finalizado.'}]}]},{t:'Telemarketing',items:[{t:'Migração de Plano',m:'Cliente entrou em contato solicitando a migração do plano atual.\n\nInformado ao mesmo que este setor não possui acesso a valores e que o **time comercial entrará em contato**.\n\n**Solicitado ao time comercial que entre em contato com o cliente e siga com a solicitação.**'}]},{t:'Cancelamento',items:[{t:'Solicitação de Cancelamento',m:'Cliente entrou em contato **solicitando o cancelamento do serviço**.\n\nMotivo: **{{MOTIVO}}**\n\n{{INDICAÇÃO DE PONTO|Não=Cliente informa **não possuir ninguém para indicar o ponto** e **deseja seguir com o cancelamento**.|Sim=Cliente informa **possuir indicação para o ponto**. Repassados os dados ao setor responsável para prosseguimento.}}\n\n{{MELHOR MEIO DE CONTATO|WhatsApp=Cliente prefere o contato por Whats App.|Ligação=Cliente prefere o contato por ligação.}}\n\nCliente prefere o contato no horário: {{HORÁRIO}}'}]},{t:'Interrupções',items:[{t:'Rompimento',m:'Verificado o rompimento no local, informamos ao cliente a previsão inicial.\n\nAtendimento finalizado'},{t:'Queda de energia',m:'Cliente em contato o mesmo sem conexão,\nVerificado que houve queda de energia na região, orientado a deixar os equipamentos ligados na tomada, e sobre o tempo para a conexão normalizar. \nO mesmo compreendeu. \nAtendimento finalizado.'},{t:'Instabilidade Link',m:'Cliente em contato o mesmo lentidão.\nVerificado que estamos com instabilidade no link no momento.\nOrientado que o nossos técnicos já estão verificando e não foi informado sobre tempo para a conexão normalizar.\nCliente compreendeu.\nAtendimento finalizado.'}]}];
     
@@ -240,7 +257,7 @@
         var s=shell('Preencher campo','Informe o valor de '+label+':');
         var inp=document.createElement('input');
         inp.type='text';
-        inp.style.cssText='display:block;width:calc(100% - 36px) !important;margin:10px 18px 2px !important;padding:10px 12px !important;background:rgba(0,0,0,0.25) !important;border:1px solid #6c46b5 !important;border-radius:7px !important;color:#ffffff !important;font-size:14px !important;outline:none !important;';
+        inp.style.cssText='display:block;width:calc(100% - 36px) !important;margin:10px 18px 2px !important;padding:10px 12px !important;background:rgba(0,0,0,0.25) !important;border:1px solid #6c46b5 !important;border-radius:7px !important;color:#ffffff !important;font-size:14px !important;outline:none !important;text-transform:none !important;';
         inp.onfocus=function(){inp.style.setProperty('border-color', '#42d3a5', 'important');};
         inp.onblur=function(){inp.style.setProperty('border-color', '#6c46b5', 'important');};
         s.box.appendChild(inp);
@@ -294,7 +311,7 @@
         var ta=document.createElement('textarea');
         ta.value=stripB(raw);
         ta.rows=6;
-        ta.style.cssText='display:block;width:calc(100% - 36px) !important;margin:10px 18px 2px !important;padding:10px 12px !important;background:rgba(0,0,0,0.25) !important;border:1px solid #6c46b5 !important;border-radius:7px !important;color:#ffffff !important;font:12px/1.5 ui-monospace,monospace !important;resize:vertical !important;outline:none !important;';
+        ta.style.cssText='display:block;width:calc(100% - 36px) !important;margin:10px 18px 2px !important;padding:10px 12px !important;background:rgba(0,0,0,0.25) !important;border:1px solid #6c46b5 !important;border-radius:7px !important;color:#ffffff !important;font:12px/1.5 ui-monospace,monospace !important;resize:vertical !important;outline:none !important;text-transform:none !important;';
         s.box.appendChild(ta);
         var r=btnRow(s.box);
         var okb=mkBtn('Fechar',1);
@@ -312,6 +329,10 @@
         setTimeout(function(){t.remove();},bad?4200:1800);
     }
     
+    var stCss=document.createElement('style');
+    stCss.textContent='@keyframes rl-ent{from{opacity:0;transform:translate(-50%,-50%) scale(.96)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}#skx-proto-panel{animation:rl-ent .22s ease !important;}';
+    document.documentElement.appendChild(stCss);
+
     var panel=document.createElement('div');
     panel.id=PID;
     
@@ -320,10 +341,20 @@
     var head=document.createElement('div');
     head.style.cssText='padding:18px 16px 4px !important;color:#42d3a5 !important;font-size:16px !important;font-weight:700 !important;text-align:center !important;';
     
+    // Botão "Aa": alterna entre mandar o relato em MAIÚSCULAS ou como digitado
+    btnAa=document.createElement('button');
+    btnAa.type='button';
+    btnAa.title='Alternar caixa alta: quando ligado (AA), o relato sai em MAIÚSCULAS';
+    btnAa.textContent='Aa';
+    btnAa.style.cssText='position:absolute;top:12px;right:12px;padding:5px 10px !important;border:1px solid #6c46b5 !important;border-radius:6px !important;background:rgba(0,0,0,.25) !important;color:#d8cbf5 !important;font:700 12px/1 system-ui,sans-serif !important;cursor:pointer !important;z-index:3 !important;transition:all .15s !important;';
+    btnAa.onclick=function(){window.dispatchEvent(new CustomEvent('cc-caps-alternar'));};
+    pintarBtnCaps();
+    panel.appendChild(btnAa);
+    
     var search=document.createElement('input');
     search.type='text';
     search.placeholder='Digite o número e pressione Enter...';
-    search.style.cssText='margin:12px 16px 8px !important;width:calc(100% - 32px) !important;padding:10px 14px !important;background:rgba(0,0,0,0.25) !important;border:1px solid #6c46b5 !important;border-radius:6px !important;color:#ffffff !important;font-size:13px !important;outline:none !important; transition: all 0.2s ease !important;box-sizing:border-box !important;';
+    search.style.cssText='margin:12px 16px 8px !important;width:calc(100% - 32px) !important;padding:10px 14px !important;background:rgba(0,0,0,0.25) !important;border:1px solid #6c46b5 !important;border-radius:6px !important;color:#ffffff !important;font-size:13px !important;outline:none !important; transition: all 0.2s ease !important;box-sizing:border-box !important;text-transform:none !important;';
     
     search.onfocus=function(){search.style.setProperty('border-color', '#42d3a5', 'important');};
     search.onblur=function(){search.style.setProperty('border-color', '#6c46b5', 'important');};
@@ -371,11 +402,18 @@
     }
     
     function doInsert(raw){
+        if(capsOn){raw=raw.toUpperCase();}
         busy=true;
         head.textContent='Inserindo...';
         insertText(raw,function(good,el){
             busy=false;
-            if(good){toast('Inserido ✓');close();return;}
+            if(good){
+                toast('Inserido');
+                // Som de confirmação (volume do slider do popup) via relay
+                // instalado pelo background/snippets-content nesta aba
+                window.dispatchEvent(new CustomEvent('cc-notificacao-sucesso'));
+                close();return;
+            }
             copyRich(raw,function(okc){
                 if(el){caretEnd(el);}
                 if(okc){toast('Copiado — pressione Ctrl+V no campo Relato',1);close();}
@@ -448,6 +486,8 @@
     panel.appendChild(list);
     document.body.appendChild(panel);
     render();
+    // Pede o estado do "Aa" ao relay da extensão (resposta em cc-caps-estado)
+    window.dispatchEvent(new CustomEvent('cc-caps-pedir'));
     
     document.addEventListener('keydown',function esc2(e){
         if(e.key==='Escape'){if(document.getElementById(OV)){return;}close();document.removeEventListener('keydown',esc2);}

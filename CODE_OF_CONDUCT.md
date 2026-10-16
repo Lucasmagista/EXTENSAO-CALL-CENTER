@@ -36,7 +36,7 @@ Este Código de Conduta aplica-se a todos os espaços do projeto e também aplic
 
 ## Aplicação
 
-Casos de comportamento abusivo, de assédio ou de outra forma inaceitável podem ser reportados aos mantenedores do projeto (Mometto / Diogo — Magista) pelo GitHub: [github.com/lv777x/call-center-tools](https://github.com/lv777x/call-center-tools).
+Casos de comportamento abusivo, de assédio ou de outra forma inaceitável podem ser reportados aos mantenedores do projeto (Mometto / Diogo — Magista) pelo GitHub: [github.com/Lucasmagista/EXTENSAO-CALL-CENTER](https://github.com/Lucasmagista/EXTENSAO-CALL-CENTER).
 
 Todas as reclamações serão revisadas e investigadas de forma rápida e justa.
 

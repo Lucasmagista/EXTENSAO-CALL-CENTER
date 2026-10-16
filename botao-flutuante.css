@@ -66,6 +66,9 @@
   border-bottom:1px solid rgba(255,255,255,.12);
 }
 #cctools-fab-menu .fab-acao{
+  display:flex;
+  align-items:center;
+  gap:8px;
   background:rgba(255,255,255,.07);
   color:#f3ebff;
   border:1px solid rgba(255,255,255,.14);
@@ -75,6 +78,15 @@
   text-align:left;
   cursor:pointer;
   transition: background .12s ease, transform .1s ease;
+}
+#cctools-fab-menu .fab-acao .ico{
+  width:15px;
+  height:15px;
+  flex:0 0 auto;
+  transition:transform .16s ease;
+}
+#cctools-fab-menu .fab-acao:hover .ico{
+  transform:scale(1.18);
 }
 #cctools-fab-menu .fab-acao:hover{
   background:#42d3a5;
@@ -96,6 +108,11 @@
   color:#f3ebff;
   font-size:12px;
   padding:2px 4px;
+}
+#cctools-fab-menu .fab-volume .ico{
+  width:15px;
+  height:15px;
+  flex:0 0 auto;
 }
 #cctools-fab-menu .fab-volume input{
   flex:1;
