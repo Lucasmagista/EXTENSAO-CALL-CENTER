@@ -49,7 +49,6 @@ const telaPrincipal = document.getElementById("tela-principal");
 const telaSecundaria = document.getElementById("tela-secundaria");
 const telaLinks = document.getElementById("tela-links");
 const telaConfig = document.getElementById("tela-config");
-const telaAdmin = document.getElementById("modal-admin");
 
 // Volta para a tela principal (tela secundária Relatos/Mensagens)
 document.getElementById("btn-voltar").addEventListener("click", () => {
@@ -63,11 +62,6 @@ document.getElementById("btn-voltar-links").addEventListener("click", () => {
   mostrar(telaPrincipal);
 });
 
-// Fecha a modal admin (botão ✕, clique no fundo ou Esc)
-function fecharModalAdmin() { ocultar(telaAdmin); }
-document.getElementById("btn-admin-fechar").addEventListener("click", fecharModalAdmin);
-telaAdmin.addEventListener("click", (e) => { if (e.target === telaAdmin) fecharModalAdmin(); });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !telaAdmin.classList.contains("oculto")) fecharModalAdmin(); });
 
 // ==========================================
 // CATÁLOGO DE AÇÕES (usadas pelos botões da tela principal)
@@ -762,355 +756,30 @@ chrome.storage.local.get([CONFIG_KEY, "ccTools_sitesPermitidos"], (res) => {
 // ==========================================
 // PAINEL ADMIN — personalização dos botões
 // ==========================================
-// Acesso pelo ⚙️ (tela-config) → "Editar botões da tela principal": abre
-// como MODAL sobre a janela (sem trocar de tela). A senha é
-// verificada no background (PBKDF2); a sessão dura 8h (adminTemSessao) e pode
-// ser encerrada com "Sair do admin" (adminSair).
-const adminGate = document.getElementById("admin-gate");
-const adminEditor = document.getElementById("admin-editor");
-const adminSenha = document.getElementById("admin-senha");
-const adminGateErro = document.getElementById("admin-gate-erro");
-const adminLista = document.getElementById("admin-lista");
-let adminAberto = false; // sessão válida nesta janela
-
+// O editor completo mora na modal injetada na aba ativa (ADMIN MODAL.html +
+// admin-modal.js), no mesmo padrão das modais do PROX/Sugestões: aqui a
+// popup só pede ao background para abri-la. A senha é verificada no fundo
+// (PBKDF2) e a sessão dura 8h (adminTemSessao / adminSair).
 document.getElementById("btnAbrirAdmin").addEventListener("click", () => {
-  mostrar(telaAdmin);
-  abrirAdmin();
-});
-
-function abrirAdmin() {
-  adminAberto = false;
-  adminGateErro.classList.add("oculto");
-  adminSenha.value = "";
-  // Já tem sessão válida? Pula a senha.
-  chrome.runtime.sendMessage({ type: "adminTemSessao" }, (resp) => {
-    const temSessao = !chrome.runtime.lastError && resp && resp.ok && resp.ativo;
-    if (temSessao) { entrarNoEditor(); return; }
-    ocultar(adminEditor);
-    mostrar(adminGate);
-    adminSenha.focus();
-  });
-}
-
-function entrarNoEditor() {
-  adminAberto = true;
-  ocultar(adminGate);
-  mostrar(adminEditor);
-  pintarAdmin();
-}
-
-function mostrarErroGate(msg) {
-  adminGateErro.textContent = msg;
-  adminGateErro.classList.remove("oculto");
-}
-
-document.getElementById("btn-admin-entrar").addEventListener("click", () => tentarEntrarAdmin());
-adminSenha.addEventListener("keydown", (e) => { if (e.key === "Enter") tentarEntrarAdmin(); });
-
-function tentarEntrarAdmin() {
-  const senha = adminSenha.value;
-  adminSenha.value = "";
-  if (!senha) { mostrarErroGate("Digite a senha do admin."); return; }
-  mostrarErroGate("");
-  chrome.runtime.sendMessage({ type: "adminValidarSenha", senha }, (resp) => {
-    if (chrome.runtime.lastError) {
-      mostrarErroGate("Erro ao verificar: " + chrome.runtime.lastError.message);
+  setStatus("Abrindo personalização...");
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tab = tabs && tabs[0];
+    if (!tab || tab.id == null) {
+      setStatus("Nenhuma aba ativa encontrada.");
       return;
     }
-    if (resp && resp.ok) { entrarNoEditor(); return; }
-    mostrarErroGate((resp && resp.error) || "Senha incorreta.");
-  });
-}
-
-document.getElementById("btn-admin-sair").addEventListener("click", () => {
-  chrome.runtime.sendMessage({ type: "adminSair" }, () => {
-    void chrome.runtime.lastError;
-    adminAberto = false;
-    ocultar(adminEditor);
-    mostrar(adminGate);
-    setStatus("Sessão do admin encerrada.");
-    setTimeout(() => setStatus(""), 2000);
-  });
-});
-
-document.getElementById("btn-admin-add").addEventListener("click", () => {
-  cfgUi.botoes.push({ id: idNovo(), tipo: "link", rotulo: "Novo botão", acao: "abrir-url", url: "", icone: "link", visivel: true });
-  salvarCfgUi();
-  pintarAdmin();
-});
-
-document.getElementById("btn-admin-add-menu").addEventListener("click", () => {
-  cfgUi.botoes.push({ id: idNovo(), tipo: "menu", rotulo: "Novo submenu", icone: "grid", visivel: true, itens: [] });
-  salvarCfgUi();
-  pintarAdmin();
-});
-
-document.getElementById("btn-admin-reset").addEventListener("click", () => {
-  cfgUi = { proxVisivel: true, botoes: botoesPadrao() };
-  chrome.storage.local.remove([UI_CUSTOM_KEY], () => {
-    renderizarPrincipal();
-    pintarAdmin();
-    setStatus("Botões padrão restaurados.");
-    setTimeout(() => setStatus(""), 2200);
-  });
-});
-
-function acharBotao(id) { return cfgUi.botoes.find((b) => b.id === id); }
-
-function moverBotao(id, delta) {
-  const i = cfgUi.botoes.findIndex((b) => b.id === id);
-  const j = i + delta;
-  if (i < 0 || j < 0 || j >= cfgUi.botoes.length) return;
-  const tmp = cfgUi.botoes[i];
-  cfgUi.botoes[i] = cfgUi.botoes[j];
-  cfgUi.botoes[j] = tmp;
-  salvarCfgUi();
-  pintarAdmin();
-}
-
-function excluirBotao(id) {
-  const b = acharBotao(id);
-  if (!b) return;
-  // Botões "padrao" não podem ser excluídos — só ocultados. Links (menu fixo)
-  // também não: é o submenu original da equipe.
-  if (b.tipo === "padrao" || id === "links") return;
-  cfgUi.botoes = cfgUi.botoes.filter((x) => x.id !== id);
-  salvarCfgUi();
-  pintarAdmin();
-}
-
-function pintarAdmin() {
-  adminLista.textContent = "";
-
-  // Linha fixa: mostrar/ocultar o split do PROX
-  adminLista.appendChild(montarLinhaProx());
-
-  cfgUi.botoes.forEach((b, idx) => {
-    adminLista.appendChild(montarItemAdmin(b, idx));
-  });
-}
-
-function botaoIcone(titulo, icone, onclick, desabilitado) {
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "admin-ico-btn";
-  btn.title = titulo;
-  btn.innerHTML = svgIco(icone);
-  if (desabilitado) btn.disabled = true;
-  else btn.addEventListener("click", onclick);
-  return btn;
-}
-
-function montarLinhaProx() {
-  const wrap = document.createElement("div");
-  wrap.className = "admin-item" + (cfgUi.proxVisivel ? "" : " admin-oculto");
-  const topo = document.createElement("div");
-  topo.className = "admin-linha-topo";
-  const ico = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  ico.setAttribute("class", "admin-ico-prev");
-  ico.innerHTML = '<use href="#i-send"/>';
-  const nome = document.createElement("span");
-  nome.className = "admin-nome";
-  nome.textContent = "Enviar PROX";
-  const tipo = document.createElement("span");
-  tipo.className = "admin-tipo";
-  tipo.textContent = "fixo no topo";
-  topo.appendChild(ico);
-  topo.appendChild(nome);
-  topo.appendChild(tipo);
-  topo.appendChild(botaoIcone(cfgUi.proxVisivel ? "Ocultar" : "Mostrar", cfgUi.proxVisivel ? "eye-off" : "eye", () => {
-    cfgUi.proxVisivel = !cfgUi.proxVisivel;
-    salvarCfgUi();
-    pintarAdmin();
-  }));
-  wrap.appendChild(topo);
-  return wrap;
-}
-
-function montarItemAdmin(b, idx) {
-  const wrap = document.createElement("div");
-  wrap.className = "admin-item" + (b.visivel === false ? " admin-oculto" : "");
-  const topo = document.createElement("div");
-  topo.className = "admin-linha-topo";
-
-  // Mover ↑ ↓
-  topo.appendChild(botaoIcone("Subir", "cima", () => moverBotao(b.id, -1), idx === 0));
-  topo.appendChild(botaoIcone("Descer", "baixo", () => moverBotao(b.id, 1), idx === cfgUi.botoes.length - 1));
-
-  // Ícone atual
-  const ico = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  ico.setAttribute("class", "admin-ico-prev");
-  ico.innerHTML = '<use href="#i-' + esc(b.icone || "check") + '"/>';
-  topo.appendChild(ico);
-
-  const nome = document.createElement("span");
-  nome.className = "admin-nome";
-  nome.textContent = b.rotulo || "(sem nome)";
-  topo.appendChild(nome);
-
-  const tipo = document.createElement("span");
-  tipo.className = "admin-tipo";
-  tipo.textContent = b.tipo === "menu" ? "submenu" : (b.tipo === "link" ? "link" : "função");
-  topo.appendChild(tipo);
-
-  // Mostrar / ocultar
-  topo.appendChild(botaoIcone(b.visivel === false ? "Mostrar" : "Ocultar", b.visivel === false ? "eye" : "eye-off", () => {
-    b.visivel = b.visivel === false;
-    salvarCfgUi();
-    pintarAdmin();
-  }));
-
-  // Editar (abre/fecha o formulário)
-  let formAberto = false;
-  const btnEditar = botaoIcone("Editar", "pencil", () => {
-    formAberto = !formAberto;
-    form.classList.toggle("oculto", !formAberto);
-  });
-  topo.appendChild(btnEditar);
-
-  // Excluir (só botões criados no admin — nem o Links fixo)
-  const podeExcluir = b.tipo !== "padrao" && b.id !== "links";
-  topo.appendChild(botaoIcone("Excluir", "trash", () => {
-    if (!window.confirm("Excluir o botão \"" + (b.rotulo || "") + "\"?")) return;
-    excluirBotao(b.id);
-  }, !podeExcluir));
-
-  wrap.appendChild(topo);
-
-  // Formulário de edição (oculto por padrão)
-  const form = document.createElement("div");
-  form.className = "admin-form oculto";
-
-  // Rótulo
-  form.appendChild(campoTexto("Rótulo (nome do botão)", b.rotulo || "", (v) => {
-    b.rotulo = v.slice(0, 40);
-    salvarCfgUi();
-    nome.textContent = b.rotulo || "(sem nome)";
-  }));
-
-  // Ícone
-  form.appendChild(campoSelect("Ícone", ICONES_DISP, b.icone || "check", (v) => {
-    b.icone = v;
-    salvarCfgUi();
-    ico.innerHTML = '<use href="#i-' + esc(v) + '"/>';
-  }));
-
-  // Ação (só para tipo padrao; link/menu têm tratamento próprio)
-  if (b.tipo === "padrao") {
-    const nomes = Object.keys(ACOES).filter((k) => k !== "abrir-url");
-    const rotulos = nomes.map((k) => ACOES[k].nome);
-    form.appendChild(campoSelect("Função do botão", rotulos, ACOES[b.acao] ? ACOES[b.acao].nome : "", (rotuloEscolhido) => {
-      const k = nomes.find((kk) => ACOES[kk].nome === rotuloEscolhido);
-      if (k) { b.acao = k; salvarCfgUi(); }
-    }, rotulos.indexOf(ACOES[b.acao] ? ACOES[b.acao].nome : "") >= 0
-      ? ACOES[b.acao].nome : rotulos[0]));
-  }
-
-  // URL (para botões tipo link)
-  if (b.tipo === "link") {
-    form.appendChild(campoTexto("Link (https://…)", b.url || "", (v) => {
-      b.url = v.slice(0, 500);
-      salvarCfgUi();
-    }, "url"));
-  }
-
-  // Itens do submenu (para tipo menu) — inclui o Links fixo
-  if (b.tipo === "menu") {
-    const rotItens = document.createElement("label");
-    rotItens.textContent = "Itens do submenu (nome + link)";
-    form.appendChild(rotItens);
-    const boxItens = document.createElement("div");
-    form.appendChild(boxItens);
-
-    const pintarItens = () => {
-      boxItens.textContent = "";
-      (b.itens || []).forEach((it, i) => {
-        const linha = document.createElement("div");
-        linha.className = "admin-item-link";
-        const inpNome = document.createElement("input");
-        inpNome.type = "text";
-        inpNome.placeholder = "Nome";
-        inpNome.value = it.nome || "";
-        inpNome.addEventListener("change", () => { it.nome = inpNome.value.slice(0, 40); salvarCfgUi(); });
-        const inpUrl = document.createElement("input");
-        inpUrl.type = "text";
-        inpUrl.className = "admin-inp-url";
-        inpUrl.placeholder = "https://…";
-        inpUrl.value = it.url || "";
-        inpUrl.addEventListener("change", () => { it.url = inpUrl.value.slice(0, 500); salvarCfgUi(); });
-        const btnCima = botaoIcone("Subir item", "cima", () => {
-          if (i === 0) return;
-          const t = b.itens[i - 1]; b.itens[i - 1] = b.itens[i]; b.itens[i] = t;
-          salvarCfgUi(); pintarItens();
-        }, i === 0);
-        const btnBaixo = botaoIcone("Descer item", "baixo", () => {
-          if (i >= b.itens.length - 1) return;
-          const t = b.itens[i + 1]; b.itens[i + 1] = b.itens[i]; b.itens[i] = t;
-          salvarCfgUi(); pintarItens();
-        }, i >= b.itens.length - 1);
-        const btnDel = botaoIcone("Excluir item", "trash", () => {
-          b.itens.splice(i, 1);
-          salvarCfgUi(); pintarItens();
-        });
-        linha.appendChild(inpNome);
-        linha.appendChild(inpUrl);
-        linha.appendChild(btnCima);
-        linha.appendChild(btnBaixo);
-        linha.appendChild(btnDel);
-        boxItens.appendChild(linha);
-      });
-    };
-    pintarItens();
-
-    const btnAddItem = document.createElement("button");
-    btnAddItem.type = "button";
-    btnAddItem.className = "admin-add-item";
-    btnAddItem.innerHTML = svgIco("plus") + " Adicionar item";
-    btnAddItem.addEventListener("click", () => {
-      b.itens = b.itens || [];
-      b.itens.push({ id: idNovo(), nome: "", url: "" });
-      salvarCfgUi();
-      pintarItens();
+    chrome.runtime.sendMessage({ type: "mostrarModalAdmin", tabId: tab.id }, (resp) => {
+      if (chrome.runtime.lastError || !resp || !resp.ok) {
+        setStatus((resp && resp.error) ||
+          (chrome.runtime.lastError && chrome.runtime.lastError.message) ||
+          "Abra o WhatsApp Web ou o chat da empresa.");
+        setTimeout(() => setStatus(""), 3500);
+        return;
+      }
+      fecharSePopup();
     });
-    form.appendChild(btnAddItem);
-  }
-
-  wrap.appendChild(form);
-  return wrap;
-}
-
-function campoTexto(rotulo, valor, onchange, tipo) {
-  const wrap = document.createElement("div");
-  wrap.className = "admin-campo";
-  const lbl = document.createElement("label");
-  lbl.textContent = rotulo;
-  const inp = document.createElement("input");
-  inp.type = tipo === "url" ? "url" : "text";
-  inp.value = valor;
-  inp.addEventListener("change", () => onchange(inp.value));
-  wrap.appendChild(lbl);
-  wrap.appendChild(inp);
-  return wrap;
-}
-
-function campoSelect(rotulo, opcoes, valorAtual, onchange, valorSelect) {
-  const wrap = document.createElement("div");
-  wrap.className = "admin-campo";
-  const lbl = document.createElement("label");
-  lbl.textContent = rotulo;
-  const sel = document.createElement("select");
-  opcoes.forEach((op) => {
-    const o = document.createElement("option");
-    o.value = op;
-    o.textContent = op;
-    sel.appendChild(o);
   });
-  sel.value = valorSelect != null ? valorSelect : valorAtual;
-  sel.addEventListener("change", () => onchange(sel.value));
-  wrap.appendChild(lbl);
-  wrap.appendChild(sel);
-  return wrap;
-}
+});
 
 // ==========================================
 // BOOT — carrega config dos botões e renderiza a tela principal

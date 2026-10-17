@@ -1827,7 +1827,7 @@ function construirModalProx(conteudoHtml, logoUri) {
   var antigo = document.getElementById(ID);
   if (antigo) antigo.parentNode.removeChild(antigo);
   // Nunca deixa duas modais abertas ao mesmo tempo (ids px-/sg- são iguais)
-  var outras = ["cc-suporte-modal", "cc-sugestoes-modal"];
+  var outras = ["cc-suporte-modal", "cc-sugestoes-modal", "cc-admin-modal"];
   for (var i = 0; i < outras.length; i++) {
     var el = document.getElementById(outras[i]);
     if (el) el.parentNode.removeChild(el);
@@ -1943,7 +1943,7 @@ function construirModalSuporte(conteudoHtml, logoUri) {
   var antigo = document.getElementById(ID);
   if (antigo) antigo.parentNode.removeChild(antigo);
   // Nunca deixa duas modais abertas ao mesmo tempo (ids px-/sg- são iguais)
-  var outras = ["cc-prox-modal", "cc-sugestoes-modal"];
+  var outras = ["cc-prox-modal", "cc-sugestoes-modal", "cc-admin-modal"];
   for (var i = 0; i < outras.length; i++) {
     var el = document.getElementById(outras[i]);
     if (el) el.parentNode.removeChild(el);
@@ -2070,6 +2070,8 @@ function construirModalSugestoes(conteudoHtml, logoUri) {
   if (prox) prox.parentNode.removeChild(prox);
   var sup = document.getElementById("cc-suporte-modal");
   if (sup) sup.parentNode.removeChild(sup);
+  var adm = document.getElementById("cc-admin-modal");
+  if (adm) adm.parentNode.removeChild(adm);
 
   var raiz = document.createElement("div");
   raiz.id = ID;
@@ -2172,6 +2174,130 @@ async function mostrarModalSugestoesNaAba(tabId) {
   }
 }
 
+// ===== Personalização (modal "Personalizar botões" da extensão) =====
+const ADMIN_ARQUIVO = "ADMIN MODAL.html";
+const ADMIN_JS = "admin-modal.js";
+
+// O <script src="admin-modal.js"> é removido aqui e injetado logo depois como
+// content script — imune ao CSP da página (mesma lição das outras modais).
+function prepararHtmlAdmin(html) {
+  return html
+    .replace(/<script[^>]*src=["']admin-modal\.js["'][^>]*><\/script>\s*/i, "");
+}
+
+// Injetada via chrome.scripting.executeScript — precisa ser autocontida.
+// Mesma estrutura das modais do PROX/Sugestões (shell + Shadow DOM), com ids
+// próprios cc-admin-* para as quatro nunca coexistirem na mesma página.
+function construirModalAdmin(conteudoHtml, logoUri) {
+  var ID = "cc-admin-modal";
+  var antigo = document.getElementById(ID);
+  if (antigo) antigo.parentNode.removeChild(antigo);
+  var outras = ["cc-prox-modal", "cc-suporte-modal", "cc-sugestoes-modal", "cc-senha-wifi-modal"];
+  for (var i = 0; i < outras.length; i++) {
+    var el = document.getElementById(outras[i]);
+    if (el) el.parentNode.removeChild(el);
+  }
+
+  var raiz = document.createElement("div");
+  raiz.id = ID;
+  raiz.style.cssText = "position:fixed;left:0;top:0;right:0;bottom:0;" +
+    "z-index:2147483647;display:flex;align-items:center;justify-content:center;" +
+    "background:rgba(4,8,18,.62);font-family:'Segoe UI',Arial,sans-serif;";
+
+  var cartao = document.createElement("div");
+  cartao.style.cssText = "width:min(560px,94vw);height:min(660px,90vh);" +
+    "background:#0a1224;border:1px solid #22345c;border-radius:14px;" +
+    "box-shadow:0 24px 70px rgba(0,0,0,.55);" +
+    "display:flex;flex-direction:column;overflow:hidden;";
+
+  var cabecalho = document.createElement("div");
+  cabecalho.style.cssText = "display:flex;align-items:center;justify-content:space-between;" +
+    "gap:10px;padding:11px 14px;flex-shrink:0;color:#e8eefc;font-size:14px;font-weight:600;" +
+    "background:linear-gradient(135deg,#0d1b3d,#16305e);border-bottom:1px solid #22345c;";
+
+  var ladoEsq = document.createElement("span");
+  ladoEsq.style.cssText = "display:flex;align-items:center;gap:9px;min-width:0;";
+  if (logoUri) {
+    var imgLogo = document.createElement("img");
+    imgLogo.id = "cc-admin-logo";
+    imgLogo.src = logoUri;
+    imgLogo.alt = "Alares";
+    imgLogo.title = "Alares Internet";
+    imgLogo.style.cssText = "height:16px;display:block;";
+    ladoEsq.appendChild(imgLogo);
+  }
+  var titulo = document.createElement("span");
+  titulo.textContent = "Personalizar botões";
+  ladoEsq.appendChild(titulo);
+
+  var btnFechar = document.createElement("button");
+  btnFechar.type = "button";
+  btnFechar.setAttribute("aria-label", "Fechar");
+  btnFechar.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none"' +
+    ' stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"' +
+    ' aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+  btnFechar.style.cssText = "width:28px;height:28px;border:0;border-radius:7px;" +
+    "background:rgba(255,255,255,.12);color:#e8eefc;cursor:pointer;line-height:1;" +
+    "display:flex;align-items:center;justify-content:center;";
+  btnFechar.addEventListener("mouseenter", function () { btnFechar.style.background = "rgba(255,255,255,.22)"; });
+  btnFechar.addEventListener("mouseleave", function () { btnFechar.style.background = "rgba(255,255,255,.12)"; });
+
+  var corpo = document.createElement("div");
+  corpo.id = "cc-admin-corpo";
+  // Sem display:flex aqui: a ADMIN MODAL.html não tem regras de body e o
+  // wrapper ad-wrap cuida do layout (mesma lição das outras modais).
+  corpo.style.cssText = "flex:1;overflow:auto;min-height:0;background:#0a1224;";
+  corpo.innerHTML = "";
+  var sombraAdmin = corpo.attachShadow({ mode: "open" });
+  sombraAdmin.innerHTML = conteudoHtml;
+
+  function aoTeclar(e) {
+    if (e.key === "Escape") fechar();
+  }
+  function fechar() {
+    document.removeEventListener("keydown", aoTeclar, true);
+    if (raiz.parentNode) raiz.parentNode.removeChild(raiz);
+  }
+  btnFechar.addEventListener("click", fechar);
+  raiz.addEventListener("mousedown", function (e) {
+    if (e.target === raiz) fechar(); // clique no fundo escuro
+  });
+  document.addEventListener("keydown", aoTeclar, true);
+
+  cabecalho.appendChild(ladoEsq);
+  cabecalho.appendChild(btnFechar);
+  cartao.appendChild(cabecalho);
+  cartao.appendChild(corpo);
+  raiz.appendChild(cartao);
+  (document.body || document.documentElement).appendChild(raiz);
+}
+
+async function mostrarModalAdminNaAba(tabId) {
+  if (tabId == null) return { ok: false, error: "Nenhuma aba ativa encontrada." };
+  let html;
+  try {
+    const resp = await fetch(chrome.runtime.getURL(encodeURIComponent(ADMIN_ARQUIVO)));
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    html = await resp.text();
+  } catch (e) {
+    return { ok: false, error: "Arquivo \"" + ADMIN_ARQUIVO + "\" não encontrado na extensão." };
+  }
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      func: construirModalAdmin,
+      args: [prepararHtmlAdmin(html), await assetDataUri("assets/alares.png")]
+    });
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: [ADMIN_JS]
+    });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: "Abra o WhatsApp Web ou o chat da empresa para usar esta tela." };
+  }
+}
+
 // ==========================================
 // ÁREA DO ADMIN — verificação da senha no service worker
 // ==========================================
@@ -2255,7 +2381,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const ehSuporte = t === "mostrarModalSuporte" || t === "suporteLerConfig" || t === "suporteEstado" ||
     t === "suporteQR" || t === "suporteGrupos" || t === "suporteSelecionar" || t === "suporteDesconectar";
   const ehSugestoes = t === "mostrarModalSugestoes";
-  const ehAdmin = t === "adminValidarSenha" || t === "adminTemSessao" || t === "adminSair";
+  const ehAdmin = t === "adminValidarSenha" || t === "adminTemSessao" || t === "adminSair" ||
+    t === "mostrarModalAdmin";
   if (!ehProx && !ehSuporte && !ehSugestoes && !ehAdmin) return false;
 
   (async () => {
@@ -2354,6 +2481,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (t === "mostrarModalSugestoes") {
         const tabId = typeof message.tabId === "number" ? message.tabId : (sender.tab && sender.tab.id);
         return await mostrarModalSugestoesNaAba(tabId);
+      }
+      if (t === "mostrarModalAdmin") {
+        const tabId = typeof message.tabId === "number" ? message.tabId : (sender.tab && sender.tab.id);
+        return await mostrarModalAdminNaAba(tabId);
       }
       return { ok: false, error: "Ação desconhecida." };
     } catch (e) {
