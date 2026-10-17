@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Novidades — CallCenter - TOOLS</title>
+<meta name="description" content="Histórico de versões e novidades da extensão CallCenter TOOLS.">
+<meta name="theme-color" content="#f4efe6">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&family=Unbounded:wght@400..900&family=Press+Start+2P&family=Gochi+Hand&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="index.html" aria-label="CallCenter TOOLS — início">
+      <span class="brand-mark"><svg class="li" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z"/></svg></span>
+      <span class="brand-txt"><b>CallCenter</b><i>Tools</i></span>
+    </a>
+    <button class="nav-toggle" aria-label="Abrir menu" aria-expanded="false"><svg class="li" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg></button>
+    <nav class="nav">
+      <a href="recursos.html">Recursos</a>
+      <a href="instalacao.html">Instalação</a>
+      <a href="changelog.html">Novidades</a>
+      <a href="privacidade.html">Privacidade</a>
+      <a href="contato.html">Contato</a>
+    </nav>
+    <div class="header-cta">
+      <a class="header-link" href="https://github.com/Lucasmagista" rel="noopener">GitHub</a>
+      <a class="btn btn-outline btn-sm" href="https://chromewebstore.google.com/detail/callcenter-tools/acgdpiahfakpindcloiopmelfihkiefa" target="_blank" rel="noopener">Instalar</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap docs">
+    <aside class="docs-aside">
+      <p class="side-title">Navegação</p>
+      <nav>
+        <a href="recursos.html">Recursos</a>
+        <a href="instalacao.html">Instalação</a>
+        <a href="changelog.html">Novidades</a>
+        <a href="privacidade.html">Privacidade</a>
+        <a href="contato.html">Contato</a>
+      </nav>
+      <p class="side-title">Nesta página</p>
+      <nav>
+        <a href="#historico">Histórico completo</a>
+      </nav>
+    </aside>
+
+    <div class="docs-content" id="historico">
+      <header class="docs-head">
+        <span class="eyebrow pixel">HISTÓRICO</span>
+        <h1>Novidades e <span class="hollow">versões</span></h1>
+        <p class="lead">Acompanhe o que foi adicionado, corrigido e aprimorado a cada atualização da extensão.</p>
+        <p class="tagline" style="margin-top:18px"><b>14</b> versões publicadas&nbsp;· última: <b>v1.25</b></p>
+      </header>
+
+      <div class="rel-lista">
+<article class="rel-card"><header class="rel-head"><h3 class="rel-ver">v1.25 <span class="badge">Atual</span></h3><span class="rel-data">2026-10-17</span></header><div class="rel-corpo">
+<h4 class="rel-sec sec-add">Adicionado</h4>
+<ul>
+<li>Botão "SOBRE A EXTENSÃO" na popup</li>
+<li>Personalização (admin) em modal</li>
+</ul>
+<h4 class="rel-sec sec-add">Alterado</h4>
+<ul>
+<li>Créditos de Mometto e Diogo com GitHub</li>
+</ul>
+</div></article>
+<article class="rel-card"><header class="rel-head"><h3 class="rel-ver">v1.24</h3><span class="rel-data">2026-10-16</span></header><div class="rel-corpo">
+<h4 class="rel-sec sec-add">Adicionado</h4>
+<ul>
+<li>Painel do admin para customizar os botões da popup (tela principal)</li>
+<li>Snippets: "Sair do admin" + modo admin que não perde no F5</li>
+<li>Propagação da configuração do suporte para o time inteiro (grupo E WhatsApp)</li>
+<li>Token de sessão para a área do suporte</li>
+<li>Modo "Sem botão" (usar só o ícone do Chrome)</li>
+</ul>
+<h4 class="rel-sec sec-add">Alterado</h4>
+<ul>
+<li>Ícone dos botões de acesso</li>
+<li>Chave do PROX pronta no pacote (sem depender de arquivo perfeito)</li>
+<li>Senha do admin verificada só no fundo (service worker)</li>
+<li>Só HTTPS para sites extras</li>
+<li>Modais do PROX, Suporte e Sugestões com Shadow DOM</li>
+<li>Todos os listeners do service worker com a mesma validação</li>
+</ul>
+<h4 class="rel-sec sec-sec">Security</h4>
+<ul>
+<li>Política de privacidade fiel (privacidade.html reescrita): sem promessa absoluta de "nada sai do computador" — descreve o que é armazenado…</li>
+<li>Sanitização estrutural da UI injetada (Shadow DOM acima) + escape de HTML já existente reforçado nos textos que entram nos painéis.</li>
+<li>Escopo de rede mínimo: permissão opcional de site só https://*/* (http não é mais sequer solicitável).</li>
+<li>Verificações de envio (ehRemetenteProprio, msgTexto, msgOrigemSite) aplicadas de forma uniforme a todos os cinco listeners de mensagem do…</li>
+</ul>
+<h4 class="rel-sec sec-fix">Corrigido</h4>
+<ul>
+<li>Conflito de merge não resolvido no <code>README.md</code></li>
+</ul>
+</div></article>
+<article class="rel-card"><header class="rel-head"><h3 class="rel-ver">v1.22</h3><span class="rel-data">2026-10-16</span></header><div class="rel-corpo">
+<h4 class="rel-sec sec-add">Adicionado</h4>
+<ul>
+<li>Botão "Mensagens" não abre mais o WhatsApp Web</li>
+<li>Snippets: padrão só o admin mexe</li>
+<li>Snippets: tags LOCAL e NOVO</li>
+<li>Snippets: aviso ao criar novo</li>
+<li>Snippets: Importar/Exportar em um botão só (modal)</li>
+<li>Snippets: layout corrigido</li>
+<li>Configuração de som movida para a tela Configurações</li>
+<li>Créditos "Magista" viram link</li>
+</ul>
+<h4 class="rel-sec sec-sec">Security</h4>
+<ul>
+<li>Endurecimento geral do pacote (varredura de segurança em todos os arquivos): background agora valida tudo que chega por mensagem —…</li>
+<li>Anti-spam das sugestões com janela própria</li>
+<li>Chave embutida não sai mais do background</li>
+<li>Só a própria extensão acessa as telas de configuração</li>
+<li>CSP explícito no manifest (script-src 'self'; object-src 'self'), reforçando o padrão do Manifest V3 contra script injetado.</li>
+<li>Áudios trancados no offscreen e no popup</li>
+<li>Importação de snippets com limites</li>
+<li>Bloqueio por tentativa nas áreas do admin (snippets e sugestões): 5 senhas erradas bloqueiam a caixa por 3 minutos; os campos de…</li>
+<li>Menos vazamento em log e HTML</li>
+</ul>
+</div></article>
+<article class="rel-card"><header class="rel-head"><h3 class="rel-ver">v1.21</h3><span class="rel-data">2026-10-15</span></header><div class="rel-corpo">
+<h4 class="rel-sec sec-add">Adicionado</h4>
+<ul>
+<li>Limite anti-spam no envio do PROX</li>
+<li>Aviso de segurança na modal PROX</li>
+<li>Animação ao conectar</li>
+<li>Som de confirmação quando o comando dá certo</li>
+<li>Menu do proprietário por gesto secreto</li>
+<li>Ícones vetoriais Lucide em toda a interface (SVGs inline oficiais, licença ISC, embutidos no pacote — nenhum CDN): modal PROX (chave,…</li>
+<li>Card do grupo fixo na modal PROX</li>
+<li>Botão "Aa" de caixa alta nos painéis de relatos e mensagens rápidas</li>
+<li>Som de confirmação personalizado</li>
+<li>Botão "Sugestões" vira MODAL na aba (igual à do WhatsApp)</li>
+<li>Área do admin na tela de Sugestões (senha do proprietário)</li>
+<li>Botão "Enviar PROX" de volta, agora via WhatsApp (Evolution API do servidor <code>whatsapp.hubly.software</code>)</li>
+<li>Sincronização da lista padrão de snippets com o GitHub restaurada</li>
+<li>Arquivos de marca Alares restaurados no pacote (removidos na 1.18): assets/alares.png, assets/alares-icon.webp e assets/Logo-Alares.png —…</li>
+</ul>
+<h4 class="rel-sec sec-add">Alterado</h4>
+<ul>
+<li>Redesign visual completo da modal PROX</li>
+<li>Tela de "Conectado" da modal PROX renovada</li>
+<li>Animações de ícone em todos os botões (mesmas do site: pulse, bounce e fade de entrada): ícones crescem no hover, o "Enviar PROX" dá bounce…</li>
+<li>Rodapé da modal PROX só com créditos Magista ("Ferramenta interna · Alares Internet — Desenvolvido por Magista"); popup, menus e demais…</li>
+<li>Moldura da modal de Senha Wi-Fi x6 (frame do background) com ícones Lucide no título (Wi-Fi) e no botão fechar; telas de snippets…</li>
+<li>Ícone da barra fixada do Chrome trocado: o swoosh Alares do icons/favicon.ico foi extraído e gerado em icons/toolbar16/32/48.png, usado…</li>
+<li>Foto do popup (tela ao clicar no ícone da barra) trocada pela assinatura branca Alares (assets/alares.png).</li>
+<li>Logo da Alares (assets/alares.png) também na tela de snippets: cabeçalho e estado vazio do editor.</li>
+<li>Botão " Mensagens" agora funciona de qualquer site: se o WhatsApp já estiver aberto, a extensão foca a aba dele; se não, abre uma nova e…</li>
+<li>Logo da Alares no popup virou link para o site oficial (www.alaresinternet.com.br).</li>
+<li>Permissões de volta no manifest.json: alarms, https://raw.githubusercontent.com/* (JSON da lista padrão) e…</li>
+<li>privacidade.html, SECURITY.md e README.md atualizados para refletir as duas requisições de rede (JSON de dados da lista padrão no GitHub e…</li>
+<li>Rótulo do controle de volume na popup: "Volume do áudio" virou "Volume dos sons", deixando claro que ele regula tanto os áudios dos…</li>
+</ul>
+<h4 class="rel-sec sec-fix">Corrigido</h4>
+<ul>
+<li>Campos de relatos e mensagens rápidas saindo em MAIÚSCULAS sem querer</li>
+<li>Botão "Mensagens" do popup travado no WhatsApp</li>
+<li>Erro de runtime no <code>prox-modal.js</code> ao interagir com a modal depois de ela fechar</li>
+<li>"Desconectar" acusava falha mesmo com a instância já caída</li>
+<li>Campo "Áudio ao usar" dos snippets ignorava o som escolhido</li>
+<li>Botão flutuante e barra lateral criando vários botões em sites com iframes (paineis, ads, about:blank): os content scripts de UI rodavam…</li>
+<li>Decodificador de senha Wi-Fi (X6) não encontrava as redes em vários arquivos hw_ctree.xml: a extração só entendia uma estrutura específica…</li>
+<li>Tabela de resultados não aparecia na modal do X6 mesmo com a decodificação funcionando: a regra body { display: flex; justify-content:…</li>
+</ul>
+<h4 class="rel-sec sec-del">Removido</h4>
+<ul>
+<li>Botão " Enviar prox" antigo (que mandava "prox" no Rocket.Chat via automação de DOM) e o atalho Alt+P daquele fluxo: substituídos pelo novo…</li>
+</ul>
+</div></article>
+<article class="rel-card"><header class="rel-head"><h3 class="rel-ver">v1.19</h3><span class="rel-data">2026-10-13</span></header><div class="rel-corpo">
+<h4 class="rel-sec sec-add">Adicionado</h4>
+<ul>
+<li>Tela modal "Senha Wi-Fi x6": os três botões (popup, botão flutuante e barra lateral) agora abrem um modal sobre a página (760×560, fecha no…</li>
+<li>senha-wifi-x6.js: JavaScript do decodificador (extraído do HTML) executado como content script dentro da modal — dropzone, decodificação…</li>
+</ul>
+<h4 class="rel-sec sec-add">Alterado</h4>
+<ul>
+<li>O botão deixou de abrir o site externo oquei-decodificar.lovable.app; toda a lógica fica no background (handler mostrarModalSenhaWifi),…</li>
+<li>O conteúdo é injetado direto na página (innerHTML) em vez de iframe: o CSP do WhatsApp (frame-src sem chrome-extension:) bloqueia molduras…</li>
+<li>Redesign completo do decodificador (baseado no mockup decodificador_wifi_oquei_telecom.html, mas com decodificação real e sem CDNs): selo…</li>
+<li>Rebranding: ícone e logotipo Alares (assets/alares-icon.webp e assets/Logo-Alares.png) embutidos como data URI (o CSP das páginas só…</li>
+<li>Estilos escopados com prefixo dx- (ids e classes) para não colidir com CSS/IDs das páginas onde a modal é injetada.</li>
+</ul>
+</div></article>
+<article class="rel-card"><header class="rel-head"><h3 class="rel-ver">v1.18</h3><span class="rel-data">2026-10-13</span></header><div class="rel-corpo">
+<h4 class="rel-sec sec-del">Removido</h4>
+<ul>
+<li>Sincronização da lista padrão de snippets com o GitHub: a lista agora vem embutida no pacote (assets/snippets-padrao.json) e é aplicada…</li>
+<li>https://raw.githubusercontent.com/* das host_permissions — a extensão não faz nenhuma requisição de rede.</li>
+<li>Permissão alarms (era usada apenas pelo sync remoto).</li>
+<li>Arquivos de marca de terceiros: assets/alares.png e assets/alares-icon.webp (política de marca da Chrome Web Store).</li>
+</ul>
+<h4 class="rel-sec sec-add">Adicionado</h4>
+<ul>
+<li>Arte "Tropa do Call Center" (assets/tropa.png, fornecida pela equipe) aplicada em: ícone da extensão (icons/icon*.png), botão flutuante,…</li>
+<li>privacidade.html: política de privacidade para publicação (GitHub Pages) e link na listagem da loja.</li>
+</ul>
+<h4 class="rel-sec sec-add">Alterado</h4>
+<ul>
+<li>Botão do rail, botão flutuante, popup e gerenciador de snippets passam a usar assets/logo.png.</li>
+<li>Textos do botão " Atualizar padrão" ajustados (agora aplica a lista embutida, não busca na internet).</li>
+</ul>
+</div></article>
+<article class="rel-card"><header class="rel-head"><h3 class="rel-ver">v1.17</h3><span class="rel-data">2026-10-13</span></header><div class="rel-corpo">
+<h4 class="rel-sec sec-add">Adicionado</h4>
+<ul>
+<li>Documentação do projeto: README.md, CHANGELOG.md, SECURITY.md, LICENSE (MIT) e CODE_OF_CONDUCT.md.</li>
+<li>homepage_url no manifest.json apontando para o repositório GitHub.</li>
+</ul>
+<h4 class="rel-sec sec-del">Removido</h4>
+<ul>
+<li>Central de atualização via GitHub (atualizar-extensao.js, update-manifest.json, seção Atualizações no popup e bloco correspondente no…</li>
+<li>Motivo: a Chrome Web Store proíbe a execução de código remoto — tudo que a extensão roda precisa estar no pacote aprovado. Na loja, as…</li>
+<li>Permissão notifications (era usada apenas pelo updater removido).</li>
+</ul>
+<h4 class="rel-sec sec-add">Nota</h4>
+<ul>
+<li>Esta é a versão preparada para publicação na Chrome Web Store.</li>
+</ul>
+</div></article>
+<article class="rel-card"><header class="rel-head"><h3 class="rel-ver">v1.16</h3><span class="rel-data">2026-10-13</span></header><div class="rel-corpo">
+<h4 class="rel-sec sec-add">Adicionado</h4>
+<ul>
+<li>Central de atualizações conectada ao GitHub (uso local/desenvolvedor):</li>
+<li>update-manifest.json no repositório (versão + lista de arquivos).</li>
+<li>atualizar-extensao.js: conexão única da pasta da extensão via File System Access API (handle guardado em IndexedDB), download e gravação de…</li>
+<li>Seção Atualizações no popup: conectar pasta, verificar, baixar/implementar com spinner, botão de reiniciar.</li>
+<li>Verificação automática no background.js a cada 30 minutos (alarme update-check), badge ↑ no ícone e notificação (uma por versão).</li>
+<li>Notificação "update-pronto" com requireInteraction que reinicia a extensão via chrome.runtime.reload().</li>
+<li>Permissão notifications.</li>
+</ul>
+<h4 class="rel-sec sec-del">Removido</h4>
+<ul>
+<li>Removido na 1.17 antes da publicação (política de código remoto da Chrome Web Store).</li>
+</ul>
+</div></article>
+<article class="rel-card"><header class="rel-head"><h3 class="rel-ver">v1.15</h3><span class="rel-data">2026-10-13</span></header><div class="rel-corpo">
+<h4 class="rel-sec sec-add">Adicionado</h4>
+<ul>
+<li>Detecção de posição no WhatsApp Web reescrita com amostragem de tela:</li>
+<li>pontoOcupado(x, y): usa document.elementsFromPoint para saber se um ponto está coberto por ícones reais (filtra por tamanho e coluna,…</li>
+<li>retanguloLivre(x, y, lado): confere 4 cantos + centro antes de posicionar.</li>
+<li>ancoraColunaEsquerda(): varre a coluna de ícones de cima pra baixo (x=28, a cada 6px) e encontra o último ícone do grupo de cima —…</li>
+<li>Empurrão de colisão: se o FAB sobrepor algum ícone, desloca 10px pra baixo (ou pra cima) até achar espaço livre.</li>
+<li>Botão flutuante passou a usar a mesma logo/formato do rail (assets/alares-icon.webp, 40×40, border-radius 11px) e o menu abre à esquerda…</li>
+</ul>
+</div></article>
+<article class="rel-card"><header class="rel-head"><h3 class="rel-ver">v1.14</h3><span class="rel-data">2026-10-13</span></header><div class="rel-corpo">
+<h4 class="rel-sec sec-add">Adicionado</h4>
+<ul>
+<li>Botão da barra lateral usa a logo assets/alares-icon.webp em botão quadrado arredondado (40×40, radius 11px) — igual ao WA Web Plus — em…</li>
+<li>assets/alares-icon.webp declarado em web_accessible_resources (exigido para exibir imagem no DOM da página).</li>
+<li>Retry para o Rocket.Chat: gatilho da barra lateral é injetado ao lado da logo no rodapé ("Desenvolvido por Rocket.Chat"), com…</li>
+</ul>
+<h4 class="rel-sec sec-add">Alterado</h4>
+<ul>
+<li>Chave de posição do FAB migrada para ccTools_fabPosicao_v2 (evita conflito com a posição salva na v1.13).</li>
+</ul>
+</div></article>
+<article class="rel-card"><header class="rel-head"><h3 class="rel-ver">v1.13</h3><span class="rel-data">2026-10-13</span></header><div class="rel-corpo">
+<h4 class="rel-sec sec-add">Adicionado</h4>
+<ul>
+<li>Configuração de modo por site (ccTools_configModos = { padrao, porSite }):</li>
+<li>Valores: "flutuante", "lateral", "ambos"; porSite[origem] vence o padrão.</li>
+<li>Popup redesenhada (250px) com botão e tela de configurações: cartões de modo padrão, lista por site com seletor, Restaurar posição e dicas.</li>
+<li>Troca de modo aplica na hora nas abas abertas (sem F5), reagindo ao storage.</li>
+<li>Migração migrarConfigModos() no background.js (roda em onInstalled/onStartup): converte o antigo ccTools_modoAcesso para o novo formato e o…</li>
+<li>Observer de DOM no ferramentas-comuns.js para reposicionar o rail/FAB quando a página muda (sem recarregar).</li>
+</ul>
+<h4 class="rel-sec sec-fix">Corrigido</h4>
+<ul>
+<li>Bug do FAB que não sumia ao trocar para o modo lateral: CSS #cctools-fab.fab-oculto { display: none !important; } no root (a regra do…</li>
+</ul>
+</div></article>
+<article class="rel-card"><header class="rel-head"><h3 class="rel-ver">v1.12</h3><span class="rel-data">2026-10-13</span></header><div class="rel-corpo">
+<h4 class="rel-sec sec-add">Adicionado</h4>
+<ul>
+<li>ferramentas-comuns.js: ações compartilhadas (window.__cctoolsAcoes = { LINKS, executar }), resolução de modo…</li>
+<li>barra-lateral.js / barra-lateral.css: rail fixo com logo + painel deslizante com todas as ferramentas; atalho Alt+X; função global…</li>
+<li>Auto-recuperação de injeção:</li>
+<li>Handler carregarAcoes no background.js injeta ferramentas-comuns.js no frame/remetente quando um content script pede.</li>
+<li>quandoAcoesProntas(cb) no fab/barra: retry 20×100ms + aviso claro na página se a versão esperada não carregar.</li>
+</ul>
+<h4 class="rel-sec sec-del">Removido</h4>
+<ul>
+<li>Side panel (sidepanel.html e suporte no background.js/popup.js): a barra lateral agora é injetada na própria página, como o WA Web Plus —…</li>
+</ul>
+<h4 class="rel-sec sec-add">Nota</h4>
+<ul>
+<li>Log de confirmação no console da página: [CCTools] ferramentas-comuns.js carregado.</li>
+</ul>
+</div></article>
+<article class="rel-card"><header class="rel-head"><h3 class="rel-ver">v1.11</h3><span class="rel-data">2026-10-13</span></header><div class="rel-corpo">
+<h4 class="rel-sec sec-add">Adicionado</h4>
+<ul>
+<li>styles.css: design system compartilhado (--raio, .oculto, .btn-comum, .btn-fantasma) usado por todas as telas.</li>
+<li>Botão flutuante (FAB) arrastável com posição persistida (ccTools_fabPosicao).</li>
+<li>Liberação dinâmica de sites extras via popup ("Permitir snippets neste site"):</li>
+<li>optional_host_permissions + chrome.permissions.request no gesto do clique.</li>
+<li>Lista salva em ccTools_sitesPermitidos; scripts injetados na aba atual na hora.</li>
+</ul>
+<h4 class="rel-sec sec-add">Alterado</h4>
+<ul>
+<li>Content scripts restringidos de &lt;all_urls&gt; para os sites suportados (princípio do menor privilégio).</li>
+<li>Removida a permissão unlimitedStorage (não era necessária).</li>
+</ul>
+</div></article>
+<article class="rel-card"><header class="rel-head"><h3 class="rel-ver">v1.10</h3><span class="rel-data">2026-10-13</span></header><div class="rel-corpo">
+<h4 class="rel-sec sec-fix">Corrigido (segurança)</h4>
+<ul>
+<li>abrirLink passou a validar contra whitelist de domínios — links fora da lista não são abertos (evita abuso se algum dado remoto for…</li>
+<li>Relatos passaram a rodar no MAIN world (chrome.scripting.executeScript({ world: 'MAIN' })) — o editor da página (DevExpress/Quill) só é…</li>
+</ul>
+<p class="rel-p">## [1.9] e anteriores</p>
+<p class="rel-p">Versão original da extensão (disponível em `teste-tropa-do-leleo/TESTE TROPA DO LOLO/` como referência histórica):</p>
+<ul>
+<li>Popup com: Enviar "prox" (Alt+P), Enviar (Alt+L), Relatos/Mensagens, Links, Configurar x6, Senha Wi-Fi, Snippets, volume do áudio.</li>
+<li>Snippets com atalho e áudio (reproduzido via documento offscreen), lista padrão sincronizada do GitHub com status de sincronização…</li>
+<li>Sincronização automática da lista padrão a cada 60 minutos (alarme syncSnippetsPadrao).</li>
+<li>Menu de mensagens rápidas do WhatsApp Web (quickreply.js).</li>
+<li>Painel de relatos (relatos.js).</li>
+<li>Configuração de ramal Huawei x6 (huaweiconfig.js).</li>
+<li>Atalhos de teclado Alt+P e Alt+L.</li>
+<li>Content script injetado em &lt;all_urls&gt; (posteriormente restringido na 1.11).</li>
+</ul>
+</div></article>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <div>
+      <div class="footer-brand">
+        <span class="brand-mark"><svg class="li" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z"/></svg></span>
+        <div><strong>CallCenter - TOOLS</strong></div>
+      </div>
+      <div class="footer-note">Criado por <a href="https://github.com/lv777x" rel="noopener">Mometto</a> e <a href="https://github.com/PaulaoMecanicas11" rel="noopener">Diogo</a> — <a href="https://www.magista.dev/">Magista</a></div>
+    </div>
+    <nav class="footer-links">
+      <a href="recursos.html">Recursos</a>
+      <a href="instalacao.html">Instalação</a>
+      <a href="changelog.html">Novidades</a>
+      <a href="privacidade.html">Privacidade</a>
+      <a href="contato.html">Contato</a>
+      <a href="https://github.com/Lucasmagista" rel="noopener">GitHub</a>
+    </nav>
+    <div class="footer-copy">
+      <span>© <span id="ano">2026</span> · Todos os direitos reservados</span>
+      <span class="sig">feito para o dia a dia de quem atende</span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+</body>
+</html>

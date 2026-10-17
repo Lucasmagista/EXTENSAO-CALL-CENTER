@@ -15,10 +15,10 @@
 </head>
 <body>
   <h1>Política de Privacidade</h1>
-  <p class="muted">Extensão <strong>CallCenter - TOOLS</strong> para Google Chrome · Última atualização: 15 de outubro de 2026</p>
+  <p class="muted">Extensão <strong>CallCenter - TOOLS</strong> para Google Chrome · Última atualização: 16 de outubro de 2026</p>
 
   <h2>Resumo</h2>
-  <p>A extensão CallCenter - TOOLS foi feita para agilizar o trabalho de atendentes de call center. Ela <strong>não coleta, não envia e não compartilha dados pessoais</strong>. Todos os dados ficam armazenados localmente, no seu próprio navegador.</p>
+  <p>A extensão CallCenter - TOOLS foi feita para agilizar o trabalho de atendentes de call center. Ela <strong>não coleta nem envia dados a servidores nossos</strong> — não há telemetria nem rastreamento. Seus dados ficam armazenados localmente, no seu próprio navegador. As duas únicas coisas que podem sair do seu computador são: <strong>conteúdo que você mesmo digita no formulário de Sugestões</strong> (entregue ao grupo de suporte no WhatsApp só quando você clica em "Enviar sugestão") e as <strong>chamadas ao seu servidor de Zap</strong> quando você usa o botão PROX.</p>
 
   <h2>Dados que a extensão armazena</h2>
   <p>Tudo é salvo localmente no armazenamento do Chrome (<code>chrome.storage.local</code>), no seu computador:</p>
@@ -28,18 +28,20 @@
     <li>Som de confirmação personalizado (o arquivo de áudio que você escolher, guardado só neste navegador)</li>
     <li>Posição dos botões da interface</li>
     <li>Preferências de modo (botão flutuante / barra lateral) por site</li>
-    <li>Sites que você liberou para uso dos snippets</li>
+    <li>Sites que você liberou para uso dos snippets (somente sites HTTPS)</li>
     <li>Lista de snippets padrão que você optou por ignorar</li>
-    <li>Configuração do botão PROX: instância, grupo escolhido e mensagem (padrão "prox"). A API Key do servidor de Zap já vem embutida no próprio pacote de instalação (arquivo local, fora do repositório público); se você usar "Alterar API Key", a chave digitada fica salva <strong>só neste navegador</strong> e é usada unicamente para autenticar no seu servidor</li>
+    <li>Configuração do botão PROX: instância, grupo escolhido e mensagem (padrão "prox"). <strong>A API Key vem embutida no arquivo local da instalação</strong> (<code>assets/prox-servidor.json</code>, fora do git) ou é digitada por você em "Alterar API Key" — no segundo caso ela fica salva <strong>só neste navegador</strong>; em qualquer caso é usada unicamente para autenticar no seu servidor. Dois registros técnicos da área do admin também ficam locais: o bloqueio após tentativas erradas de senha e o token temporário liberado pela senha certa (a senha em si não é gravada)</li>
+    <li>Configuração de suporte baixada do repositório (grupo de destino das sugestões, quando o admin publica)</li>
   </ul>
-  <p>Esses dados <strong>nunca são enviados</strong> a servidores nossos ou de terceiros (a única exceção é a API Key, enviada ao <strong>seu próprio servidor</strong> de Zap). Apagar a extensão apaga todos eles.</p>
+    <p>Esses dados <strong>nunca são enviados a servidores nossos ou de terceiros não relacionados</strong>. As exceções são: a API Key (vinda do pacote ou digitada) e as chamadas do PROX vão ao <strong>seu próprio servidor</strong> de Zap; o texto do formulário de Sugestões vai ao <strong>grupo de suporte no WhatsApp</strong> (pelo seu servidor, só quando você clica em enviar); e a extensão <strong>baixa</strong> dados do repositório oficial (lista de snippets e, se publicada, a config de suporte). Apagar a extensão apaga todos os dados locais.</p>
 
   <h2>Comunicações de rede</h2>
-  <p>A extensão faz <strong>duas</strong> requisições de rede, ambas apenas quando você usa a função correspondente:</p>
+  <p>A extensão faz <strong>três tipos de</strong> requisições de rede, ambas apenas quando você usa a função correspondente (ou, no caso das duas primeiras, automaticamente a cada 60 minutos):</p>
   <ul>
-    <li><strong>Lista padrão de snippets</strong> (um arquivo JSON de dados, sem código) do repositório público oficial <code>github.com/Lucasmagista/EXTENSAO-CALL-CENTER</code>, quando você clica em "Atualizar padrão" ou automaticamente a cada 60 minutos. Se o GitHub estiver indisponível, a cópia que vem embutida no pacote é usada.</li>
-    <li><strong>Botão PROX</strong>: chamadas REST ao seu servidor Evolution em <code>whatsapp.hubly.software</code> (criar instância, gerar QR Code, listar seus grupos, enviar a mensagem escolhida e desconectar). Só essas ações, no momento em que você usar o botão; nenhum dado de terceiros é transmitido e nenhum código é baixado. A autenticação usa a API Key que vem no pacote de instalação.</li>
-    <li><strong>Botão Sugestões</strong>: abre uma modal com o formulário (função, nome, email, setor, período e descrição) e usa as mesmas chamadas REST do PROX para entregar a mensagem padrão ao grupo de suporte no WhatsApp — só quando você clica em "Enviar sugestão". O email entra na mensagem apenas se você preencher (a mensagem deixa claro se ele foi adicionado ou não). Sem grupo configurado, o texto é copiado para a sua área de transferência, sem nenhuma requisição. O admin (senha dentro da própria modal) pode abrir a modal do suporte para conectar o WhatsApp da equipe e escolher esse grupo — mesma API Key, instância própria.</li>
+    <li><strong>Lista padrão de snippets</strong> (um arquivo JSON de dados, sem código) do repositório oficial <code>github.com/Lucasmagista/EXTENSAO-CALL-CENTER</code>, quando você clica em "Atualizar padrão" ou automaticamente a cada 60 minutos. Se o GitHub estiver indisponível, a cópia que vem embutida no pacote é usada.</li>
+    <li><strong>Configuração de suporte</strong> (também JSON de dados, sem código e sem chave): o arquivo <code>assets/suporte-config.json</code> do mesmo repositório, com o grupo de destino das sugestões e o identificador da instância do suporte (sem credencial) escolhidos pelo admin — baixado na mesma janela de 60 minutos, com fallback para a cópia embutida. Ele só existe para o time inteiro receber a mesma configuração; não contém dados pessoais nem credenciais.</li>
+      <li><strong>Botão PROX</strong>: chamadas REST ao seu servidor Evolution em <code>whatsapp.hubly.software</code> (criar instância, gerar QR Code, listar seus grupos, enviar a mensagem escolhida e desconectar). Só essas ações, no momento em que você usar o botão; nenhum dado de terceiros é transmitido e nenhum código é baixado. A autenticação usa a API Key <strong>vinda do arquivo local do pacote</strong> (fora do git) ou <strong>digitada por você</strong> em "Alterar API Key".</li>
+    <li><strong>Botão Sugestões</strong>: abre uma modal com o formulário (função, nome, email, setor, período e descrição) e usa as mesmas chamadas REST do PROX para entregar a mensagem padrão ao grupo de suporte no WhatsApp — só quando você clica em "Enviar sugestão". O que você escreve (inclusive o email, só se preenchido) vai para esse grupo de trabalho; a mensagem deixa claro se o email foi adicionado ou não. Sem grupo configurado, o texto é copiado para a sua área de transferência, sem nenhuma requisição. O admin (senha verificada dentro da própria extensão, nunca em código) pode abrir a modal do suporte para conectar o WhatsApp da equipe e escolher esse grupo — mesma API Key, instância própria.</li>
   </ul>
   <p>Não há telemetria, rastreamento, anúncios ou análise de comportamento.</p>
 
@@ -50,7 +52,7 @@
     <li><strong>storage</strong>: para salvar localmente suas preferências e snippets.</li>
     <li><strong>offscreen</strong>: para reproduzir em segundo plano os áudios dos snippets, o som de confirmação tocado quando um comando é usado no chat e o som personalizado que você escolher.</li>
     <li><strong>alarms</strong>: para atualizar a lista padrão de snippets do GitHub a cada 60 minutos.</li>
-    <li><strong>Permissões de site</strong>: restritas aos sites de atendimento; sites extras só são liberados mediante pedido e aceitação sua; acesso ao GitHub apenas para baixar a lista padrão de snippets; acesso ao seu servidor de Zap (<code>whatsapp.hubly.software</code>) apenas para as ações do botão PROX.</li>
+    <li><strong>Permissões de site</strong>: restritas aos sites de atendimento (todos HTTPS); sites extras só são liberados mediante pedido e aceitação sua, <strong>apenas endereços HTTPS</strong> (o Chrome não oferece mais permissão de site sem criptografia nesta extensão); acesso ao GitHub apenas para baixar dados JSON (lista padrão de snippets e configuração de suporte); acesso ao seu servidor de Zap (<code>whatsapp.hubly.software</code>) apenas para as ações do botão PROX.</li>
   </ul>
 
   <h2>Menção a marcas de terceiros</h2>
@@ -63,6 +65,6 @@
   <p>Qualquer mudança será publicada nesta mesma página, com a data da última atualização ajustada.</p>
 
   <h2>Contato</h2>
-  <p>Dúvidas sobre privacidade: abra uma issue em <a href="https://github.com/Lucasmagista/EXTENSAO-CALL-CENTER">github.com/Lucasmagista/EXTENSAO-CALL-CENTER</a> ou fale com os mantenedores (Mometto e Diogo — <a href="https://www.magista.dev/">Magista</a>).</p>
+  <p>Dúvidas sobre privacidade: fale com os mantenedores pelo GitHub (<a href="https://github.com/Lucasmagista">github.com/Lucasmagista</a>) ou diretamente com <a href="https://github.com/lv777x">Mometto</a> e <a href="https://github.com/PaulaoMecanicas11">Diogo</a> — <a href="https://www.magista.dev/">Magista</a>.</p>
 </body>
 </html>

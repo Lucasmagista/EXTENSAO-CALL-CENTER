@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "CallCenter - TOOLS",
-  "version": "1.22",
+  "version": "1.25",
   "description": "Ferramenta para facilitar o trabalho do Call.",
-  "homepage_url": "https://github.com/Lucasmagista/EXTENSAO-CALL-CENTER",
+  "homepage_url": "https://github.com/Lucasmagista",
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   },
@@ -16,7 +16,6 @@
     "alarms"
   ],
   "optional_host_permissions": [
-    "http://*/*",
     "https://*/*"
   ],
   "host_permissions": [
@@ -29,13 +28,8 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["assets/logo.png"],
-      "matches": [
-        "https://web.whatsapp.com/*",
-        "https://chat.oquei.com.br/*",
-        "https://elleven.oquei.com.br/*",
-        "https://oquei.sz.chat/*"
-      ]
+      "resources": ["assets/logo.png", "assets/alares-icon.webp"],
+      "matches": ["https://*/*"]
     }
   ],
   "background": {

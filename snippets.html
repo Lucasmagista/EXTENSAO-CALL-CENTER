@@ -204,6 +204,21 @@
     cursor:pointer;
   }
   #admin-entrar:hover{ background:var(--btn-hover); color:#fff; }
+  #admin-sair{
+    display:none;
+    width:100%;
+    margin-bottom:8px;
+    padding:6px 10px;
+    background:transparent;
+    border:1px solid var(--border);
+    border-radius:var(--raio-pequeno);
+    color:#f87171;
+    font-weight:700;
+    font-size:11.5px;
+    cursor:pointer;
+  }
+  #admin-sair:hover{ background:rgba(248,113,113,.12); border-color:#f87171; }
+  #admin-sair.visivel{ display:block; }
   #admin-status{ margin-top:6px; line-height:1.4; }
   #admin-status.ok{ color:var(--accent); }
   #admin-status.erro{ color:#f87171; }
@@ -418,6 +433,7 @@
       <div id="lista"></div>
       <div id="admin-box">
         <div id="admin-titulo">🔒 Área do administrador</div>
+        <button id="admin-sair" type="button">Sair do admin</button>
         <div id="admin-linha">
           <input type="password" id="admin-senha" maxlength="20" placeholder="Senha do admin" autocomplete="off">
           <button id="admin-entrar" type="button">Entrar</button>
@@ -488,7 +504,7 @@
     </div>
   </div>
 
-  <footer>Criado por Mometto e Diogo — <a href="https://www.magista.dev/" target="_blank" rel="noopener noreferrer">Magista</a></footer>
+  <footer>Criado por <a href="https://github.com/lv777x" target="_blank" rel="noopener noreferrer">Mometto</a> e <a href="https://github.com/PaulaoMecanicas11" target="_blank" rel="noopener noreferrer">Diogo</a> — <a href="https://www.magista.dev/" target="_blank" rel="noopener noreferrer">Magista</a></footer>
 
   <script src="snippets.js"></script>
 </body>

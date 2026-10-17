@@ -103,7 +103,8 @@
     "link": "<path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\"/><path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\"/>",
     "arrow-right": "<path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/>",
     "volume": "<path d=\"M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z\"/><path d=\"M16 9a5 5 0 0 1 0 6\"/><path d=\"M19.364 18.364a9 9 0 0 0 0-12.728\"/>",
-    "panel": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/><path d=\"M15 3v18\"/>"
+    "panel": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/><path d=\"M15 3v18\"/>",
+    "x": "<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>"
   };
 
   function escHtml(s) {
@@ -141,8 +142,9 @@
     btn.type = "button";
     btn.title = "CallCenter Tools — arraste para mover";
     var imgBtn = document.createElement("img");
-    imgBtn.src = chrome.runtime.getURL("assets/logo.png");
+    imgBtn.src = chrome.runtime.getURL("assets/alares-icon.webp");
     imgBtn.alt = "CallCenter Tools";
+    imgBtn.draggable = false; // arraste nativo da imagem não pode roubar o arraste do botão
     btn.appendChild(imgBtn);
 
     menu = document.createElement("div");
@@ -198,6 +200,7 @@
 
     // Trocar forma de acesso
     menu.appendChild(botaoAcao("Usar barra lateral", "modo-lateral", "panel"));
+    menu.appendChild(botaoAcao("Desativar na página", "modo-nenhum", "x"));
 
     statusEl = document.createElement("div");
     statusEl.className = "fab-status";
@@ -287,7 +290,7 @@
 
       // Fecha o menu nas ações que já dão retorno suficiente
       if (acao === "abrir-link" || acao === "senha-wifi" || acao === "snippets" ||
-          acao === "modo-lateral") {
+          acao === "modo-lateral" || acao === "modo-nenhum") {
         fecharMenu();
       }
     });

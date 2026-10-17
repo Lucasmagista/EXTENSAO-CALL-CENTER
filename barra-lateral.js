@@ -133,14 +133,15 @@
     var comum = acoes();
     if (!comum) return; // quandoAcoesProntas rechama aplicarModo quando chegar
 
-    // Ícone no trilho esquerda (logo da Alares, quadrado com cantos redondos)
+    // Ícone no trilho esquerda (GIF BonziBuddy animado, quadrado com cantos redondos)
     btn = document.createElement("button");
     btn.id = "cctools-barra-btn";
     btn.type = "button";
     btn.title = "CallCenter Tools — abrir barra lateral";
     var imgBtn = document.createElement("img");
-    imgBtn.src = chrome.runtime.getURL("assets/logo.png");
+    imgBtn.src = chrome.runtime.getURL("assets/alares-icon.webp");
     imgBtn.alt = "CallCenter Tools";
+    imgBtn.draggable = false; // evita o fantasma de arraste nativo da imagem
     btn.appendChild(imgBtn);
 
     // Painel deslizante
@@ -218,6 +219,7 @@
     var gradeModo = document.createElement("div");
     gradeModo.className = "barra-grade";
     gradeModo.appendChild(botaoAcao("Usar botão flutuante", "modo-flutuante", "largura-total", null, "puzzle"));
+    gradeModo.appendChild(botaoAcao("Desativar na página", "modo-nenhum", "largura-total", null, "x"));
     corpo.appendChild(gradeModo);
 
     statusEl = document.createElement("div");
@@ -226,7 +228,17 @@
 
     var footer = document.createElement("div");
     footer.className = "barra-footer";
-    footer.appendChild(document.createTextNode("Criado por Mometto e Diogo — "));
+    footer.appendChild(document.createTextNode("Criado por "));
+    [["Mometto", "https://github.com/lv777x"], ["Diogo", "https://github.com/PaulaoMecanicas11"]].forEach(function (par, idx) {
+      if (idx > 0) footer.appendChild(document.createTextNode(" e "));
+      var linkCriador = document.createElement("a");
+      linkCriador.href = par[1];
+      linkCriador.target = "_blank";
+      linkCriador.rel = "noopener noreferrer";
+      linkCriador.textContent = par[0];
+      footer.appendChild(linkCriador);
+    });
+    footer.appendChild(document.createTextNode(" — "));
     var linkMagista = document.createElement("a");
     linkMagista.href = "https://www.magista.dev/";
     linkMagista.target = "_blank";
@@ -278,7 +290,8 @@
       acoes().executar(acao, mostrarStatus, extra);
       // Fecha sozinho só nas ações que navegam pra fora
       if (acao === "abrir-link" || acao === "senha-wifi" || acao === "snippets" ||
-          acao === "modo-flutuante" || acao === "relatos" || acao === "mensagens") {
+          acao === "modo-flutuante" || acao === "modo-nenhum" ||
+          acao === "relatos" || acao === "mensagens") {
         fechar();
       }
     });

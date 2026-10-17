@@ -332,10 +332,35 @@ chrome.commands.onCommand.addListener((command) => {
   }
 });
 
+// Toda mensagem aceita pelo service worker precisa vir da PRÓPRIA extensão
+// (aba, popup ou content script dela) — mensagens de fora nunca chegam aos
+// handlers. Os cinco listeners do arquivo usam esta mesma guarda.
+function ehRemetenteProprio(sender) {
+  return !!(sender && typeof sender.id === "string" && sender.id === chrome.runtime.id);
+}
+
+// Tampo de segurança para textos que vêm por mensagem: sem caracteres de
+// controle e com tamanho máximo já na entrada (mesma regra do sgTexto).
+function msgTexto(v, max) {
+  let s = typeof v === "string" ? v : (v == null ? "" : String(v));
+  s = s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "");
+  return s.length > max ? s.slice(0, max) : s;
+}
+
+// Origem de site só no formato https://host[:porta] (é o que o popup grava;
+// http é recusado — a extensão não pede mais permissão de site sem HTTPS).
+function msgOrigemSite(v) {
+  const s = typeof v === "string" ? v.trim().slice(0, 300) : "";
+  if (!/^https:\/\/[A-Za-z0-9.\-]+(:\d+)?$/.test(s)) return null;
+  return s;
+}
+
 // Mensagens vindas do popup (os 2 botões)
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message && message.type === "runFlow") {
-    runFlow(message.grupo, message.msg, message.tag).then(sendResponse);
+  if (!message || typeof message.type !== "string") return false;
+  if (!ehRemetenteProprio(sender)) return false;
+  if (message.type === "runFlow") {
+    runFlow(msgTexto(message.grupo, 200), msgTexto(message.msg, 4000), msgTexto(message.tag, 30)).then(sendResponse);
     return true; // resposta assíncrona
   }
   if (message && message.type === "runQuickReplyMenu") {
@@ -346,12 +371,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     runHuaweiConfig().then(sendResponse);
     return true; // resposta assíncrona
   }
-  if (message && message.type === "salvarSiteSnippets") {
-    salvarSiteSnippets(message.origem).then(sendResponse);
-    return true;
-  }
-  if (message && message.type === "removerSiteSnippets") {
-    removerSiteSnippets(message.origem).then(sendResponse);
+  if (message.type === "salvarSiteSnippets" || message.type === "removerSiteSnippets") {
+    const origem = msgOrigemSite(message.origem);
+    if (!origem) {
+      sendResponse({ ok: false, error: "Endereço de site inválido (só HTTPS)." });
+      return false;
+    }
+    if (message.type === "salvarSiteSnippets") {
+      salvarSiteSnippets(origem).then(sendResponse);
+    } else {
+      removerSiteSnippets(origem).then(sendResponse);
+    }
     return true;
   }
   if (message && message.type === "runRelatos") {
@@ -381,8 +411,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message && message.type === "setModoAcesso") {
     // Grava o padrão preservando as regras por site; os content scripts
-    // (flutuante e barra) reagem na hora via storage
-    const modo = ["flutuante", "lateral", "ambos"].indexOf(message.modo) !== -1
+    // (flutuante e barra) reagem na hora via storage. "nenhum" = sem botão
+    // na página, só o ícone fixado no Chrome.
+    const modo = ["flutuante", "lateral", "ambos", "nenhum"].indexOf(message.modo) !== -1
       ? message.modo : "flutuante";
     chrome.storage.local.get([CONFIG_MODOS_KEY, MODO_ACESSO_KEY])
       .then((res) => {
@@ -767,7 +798,9 @@ async function _sincronizarSnippetsPadrao(opcoes) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message && message.type === "syncSnippetsPadrao") {
+  if (!message || typeof message.type !== "string") return false;
+  if (!ehRemetenteProprio(sender)) return false;
+  if (message.type === "syncSnippetsPadrao") {
     sincronizarSnippetsPadrao({ restaurarApagados: !!message.restaurarApagados }).then(sendResponse);
     return true;
   }
@@ -778,7 +811,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 const ALARME_SYNC_PADRAO = "syncSnippetsPadrao";
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm && alarm.name === ALARME_SYNC_PADRAO) sincronizarSnippetsPadrao();
+  if (alarm && alarm.name === ALARME_SYNC_PADRAO) {
+    sincronizarSnippetsPadrao();
+    // Mesma janela de 60 min atualiza a config propagada do suporte
+    // (grupo das sugestões escolhido pelo admin no repositório).
+    suporteConfigRemota({ forcar: true });
+  }
 });
 
 chrome.runtime.onStartup.addListener(() => {
@@ -786,6 +824,7 @@ chrome.runtime.onStartup.addListener(() => {
   sincronizarSnippetsPadrao();
   sincronizarScriptsSnippetsDinamicos();
   migrarConfigModos();
+  suporteConfigRemota({ forcar: true });
 });
 
 // ==========================================
@@ -837,15 +876,17 @@ async function tocarAudioSnippet(arquivo) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message && message.type === "playSnippetAudio") {
+  if (!message || typeof message.type !== "string") return false;
+  if (!ehRemetenteProprio(sender)) return false;
+  if (message.type === "playSnippetAudio") {
     tocarAudioSnippet(message.audio).then(sendResponse);
     return true;
   }
-  if (message && message.type === "playNotificacao") {
+  if (message.type === "playNotificacao") {
     tocarNotificacao().then(sendResponse);
     return true;
   }
-  if (message && message.type === "enviarSugestao") {
+  if (message.type === "enviarSugestao") {
     enviarSugestao(message.payload || message.texto).then(sendResponse);
     return true;
   }
@@ -930,6 +971,7 @@ chrome.runtime.onInstalled.addListener(() => {
   sincronizarSnippetsPadrao();
   sincronizarScriptsSnippetsDinamicos();
   migrarConfigModos();
+  suporteConfigRemota({ forcar: true });
 });
 
 // ==========================================
@@ -1023,10 +1065,12 @@ function construirModalSenhaWifi(conteudoHtml) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message && message.type === "mostrarModalSenhaWifi") {
+  if (!message || typeof message.type !== "string") return false;
+  if (!ehRemetenteProprio(sender)) return false;
+  if (message.type === "mostrarModalSenhaWifi") {
     (async () => {
       try {
-        const tabId = message.tabId != null ? message.tabId : (sender.tab && sender.tab.id);
+        const tabId = typeof message.tabId === "number" ? message.tabId : (sender.tab && sender.tab.id);
         if (tabId == null) return { ok: false, error: "Nenhuma aba ativa encontrada." };
         let html;
         try {
@@ -1068,9 +1112,11 @@ const PROX_ARQUIVO = "PROX MODAL.html";
 const PROX_JS = "prox-modal.js";
 const PROX_PADRAO_ARQUIVO = "assets/prox-servidor.json";
 
-// Chave/url que vêm embutidas no pacote (arquivo local, fora do git — o
-// repositório é público e a chave jamais pode ser versionada). Com esse
-// arquivo a operadora instala e já vai direto pro QR, sem digitar nada.
+// Chave/url do servidor vêm deste arquivo local quando existir — a API Key
+// do pacote oficial vem embutida neste arquivo (gitignorado: só o ZIP de
+// instalação a distribui). Se o arquivo faltar, a chave entra por "Alterar
+// API Key" (campo manual, salvo só no chrome.storage.local deste navegador).
+// Sem chave, a modal PROX já mostra o passo "cole a API Key".
 let proxPadraoCache = null;
 async function proxCarregarPadrao() {
   if (proxPadraoCache !== null) return proxPadraoCache;
@@ -1079,12 +1125,13 @@ async function proxCarregarPadrao() {
       const resp = await fetch(chrome.runtime.getURL(PROX_PADRAO_ARQUIVO));
       if (!resp.ok) return null;
       const dados = await resp.json();
-      if (!dados || typeof dados.apikey !== "string" || !dados.apikey.trim()) return null;
+      if (!dados || typeof dados !== "object") return null;
+      const apikey = typeof dados.apikey === "string" ? dados.apikey.trim() : "";
       return {
         url: (typeof dados.url === "string" && dados.url.trim()) ? dados.url.trim() : PROX_URL,
-        apikey: dados.apikey.trim(),
-        // Grupo de suporte no WhatsApp para o botão "Sugestões" da popup
-        // (campo opcional do arquivo; vazio = fluxo de copiar/colar).
+        apikey: apikey,
+        // Legado: pacotes antigos traziam grupoSuporte aqui; hoje o destino
+        // das sugestões vem da config propagada (assets/suporte-config.json).
         grupoSuporte: (typeof dados.grupoSuporte === "string" && dados.grupoSuporte.trim()) ? dados.grupoSuporte.trim() : ""
       };
     } catch (e) {
@@ -1092,6 +1139,63 @@ async function proxCarregarPadrao() {
     }
   })();
   return proxPadraoCache;
+}
+
+// ==========================================
+// PROPAGAÇÃO DA CONFIG DO SUPORTE (grupo das sugestões)
+// ==========================================
+// O admin escolhe o grupo no painel dele — para valer para TODO O TIME, o
+// mantenedor publica o JSON em assets/suporte-config.json no repositório
+// (um commit) e as demais navegam puxam na mesma sincronização de 60 minutos
+// dos snippets, com fallback para a cópia embutida no pacote. O arquivo é
+// SÓ de dados e sem segredo: o arquivo é versionado à vista e a API Key
+// jamais entra aqui. O painel do suporte tem o botão "Copiar config para o time"
+// que entrega esse JSON pronto para colar no repositório.
+const SUPORTE_CFG_ARQUIVO = "assets/suporte-config.json";
+const SUPORTE_CFG_REMOTO = "https://raw.githubusercontent.com/Lucasmagista/EXTENSAO-CALL-CENTER/main/assets/suporte-config.json";
+const SUPORTE_CFG_CACHE_KEY = "ccTools_suporteCfgCache";
+const SUPORTE_CFG_TTL_MS = 30 * 60 * 1000;
+
+function normalizarSuporteCfg(dados) {
+  if (!dados || typeof dados !== "object") return null;
+  const grupo = typeof dados.grupoSuporte === "string" ? dados.grupoSuporte.trim().slice(0, 200) : "";
+  if (grupo && /[\u0000-\u001F\u007F]/.test(grupo)) return null;
+  // Instância do suporte (sug-xxxxx) propagada junto: formato rígido para o
+  // arquivo remoto nunca apontar o envio para outra instância qualquer.
+  const instancia = typeof dados.instancia === "string" ? dados.instancia.trim().slice(0, 40) : "";
+  if (instancia && !/^sug-[a-z0-9]{4,30}$/i.test(instancia)) return null;
+  const grupoNome = typeof dados.grupoNome === "string" ? dados.grupoNome.trim().slice(0, 80) : "";
+  return { grupoSuporte: grupo, instancia: instancia, grupoNome: grupoNome };
+}
+
+async function suporteConfigRemota(opcoes) {
+  const forcar = !!(opcoes && opcoes.forcar);
+  if (!forcar) {
+    try {
+      const cache = (await chrome.storage.local.get([SUPORTE_CFG_CACHE_KEY]))[SUPORTE_CFG_CACHE_KEY];
+      if (cache && typeof cache.quando === "number" && Date.now() - cache.quando < SUPORTE_CFG_TTL_MS &&
+        cache.dados && typeof cache.dados === "object") {
+        return cache.dados;
+      }
+    } catch (e) { /* segue e busca */ }
+  }
+  let dados = null;
+  try {
+    // ?t= quebra o cache do CDN do GitHub (mesma manutenção da lista padrão)
+    const resp = await fetch(SUPORTE_CFG_REMOTO + "?t=" + Date.now(), { cache: "no-store" });
+    if (resp.ok) dados = normalizarSuporteCfg(await resp.json());
+  } catch (e) { /* offline → cópia embutida */ }
+  if (!dados) {
+    try {
+      const embutido = await fetch(chrome.runtime.getURL(SUPORTE_CFG_ARQUIVO));
+      if (embutido.ok) dados = normalizarSuporteCfg(await embutido.json());
+    } catch (e2) { /* sem arquivo → vazio */ }
+  }
+  if (!dados) dados = { grupoSuporte: "", instancia: "", grupoNome: "" };
+  try {
+    await chrome.storage.local.set({ [SUPORTE_CFG_CACHE_KEY]: { quando: Date.now(), dados: dados } });
+  } catch (e3) { /* storage indisponível não pode travar */ }
+  return dados;
 }
 
 // Lê o que está SALVO no navegador (sem misturar o padrão do pacote)
@@ -1111,16 +1215,17 @@ async function proxLerBruto() {
   return cfg;
 }
 
-// Config efetiva: o salvo no navegador + o padrão do pacote quando não há
-// chave manual. apikeyManual é só uma sobrescrita do operador.
+// Config efetiva: o salvo no navegador + a chave manual (o pacote não traz
+// mais chave) + o destino de suporte propagado pelo repositório.
 async function proxCarregarConfig() {
   const cfg = await proxLerBruto();
   const padrao = await proxCarregarPadrao();
+  const suporteCfg = await suporteConfigRemota();
   cfg.apikey = cfg.apikeyManual || (padrao && padrao.apikey) || "";
   cfg.url = (padrao && padrao.url) || PROX_URL;
   cfg.temPadrao = !!(padrao && padrao.apikey);
   cfg.temManual = !!cfg.apikeyManual;
-  cfg.grupoSuporte = (padrao && padrao.grupoSuporte) || "";
+  cfg.grupoSuporte = suporteCfg.grupoSuporte || (padrao && padrao.grupoSuporte) || "";
   return cfg;
 }
 
@@ -1199,7 +1304,8 @@ async function proxEstadoPopup() {
 }
 
 // Salva API Key manual (validando contra o servidor) e/ou o texto do PROX.
-// limparChave apaga a sobrescrita e volta para a chave embutida no pacote.
+// limparChave apaga a sobrescrita — como o pacote não traz mais chave, a
+// tela volta ao modo "sem chave" (a modal pede para colar a API Key).
 async function proxSalvarConfigMsg(message) {
   const cfg = await proxLerBruto();
   const padrao = await proxCarregarPadrao();
@@ -1502,6 +1608,21 @@ async function enviarSugestao(payload) {
     return { ok: false, error: "Sugestão vazia demais." };
   }
   const cfgSuporte = await suporteCarregarConfig();
+  // Navegador SEM suporte local (operadora): usa a instância + grupo
+  // propagados pelo admin via suporte-config.json — a sugestão sai pelo
+  // MESMO WhatsApp do suporte que o admin conectou, em qualquer computador,
+  // sem a operadora precisar escanear QR. Se existe suporte local
+  // (máquina do admin), ela vence — é a fonte oficial da propagação.
+  if (!cfgSuporte.grupoId) {
+    try {
+      const remoto = await suporteConfigRemota();
+      if (remoto && remoto.instancia) {
+        cfgSuporte.instancia = remoto.instancia;
+        cfgSuporte.grupoId = remoto.grupoSuporte || "";
+        cfgSuporte.grupoNome = remoto.grupoNome || remoto.grupoSuporte || "";
+      }
+    } catch (e) { /* sem remoto → fallback de sempre */ }
+  }
   const cfgProx = cfgSuporte.grupoId ? null : await proxCarregarConfig();
   const cfg = cfgProx || cfgSuporte;
   let destino = "";
@@ -1643,14 +1764,23 @@ async function suporteEstadoPopup() {
 
 // Escolhe o grupo que recebe as sugestões: salva no suporte e mantém o
 // override ccTools_sugestaoGrupo em sincronia (string com o id, formato
-// que o popup.js e o fluxo legado já leem)
+// que o popup.js e o fluxo legado já leem). A resposta traz também o JSON
+// de propagação pronto (botão "Copiar config para o time" da modal).
 async function suporteSelecionar(id, nome) {
   const cfg = await suporteLerBruto();
   cfg.grupoId = id;
   cfg.grupoNome = nome || id;
   await suporteSalvarConfigLocal(cfg);
   await chrome.storage.local.set({ ccTools_sugestaoGrupo: id });
-  return { ok: true };
+  return {
+    ok: true,
+    propagar: JSON.stringify({
+      grupoSuporte: id,
+      grupoNome: cfg.grupoNome,
+      instancia: cfg.instancia,
+      atualizadoEm: new Date().toISOString().slice(0, 10)
+    }, null, 2)
+  };
 }
 
 // QR / grupos / desconectar do suporte: mesma lógica do PROX com a cfg própria
@@ -1752,7 +1882,11 @@ function construirModalProx(conteudoHtml, logoUri) {
   // Sem display:flex aqui: o PROX MODAL.html não tem regras de body e o
   // wrapper px-wrap cuida do layout (lição do esmagamento da modal do X6).
   corpo.style.cssText = "flex:1;overflow:auto;min-height:0;background:#0a1224;";
-  corpo.innerHTML = conteudoHtml;
+  // Shadow DOM: o conteúdo (HTML + <style> px-) fica isolado — CSS da página
+  // não alcança a modal e o CSS da modal não vaza para o site.
+  corpo.innerHTML = "";
+  var sombraProx = corpo.attachShadow({ mode: "open" });
+  sombraProx.innerHTML = conteudoHtml;
 
   function aoTeclar(e) {
     if (e.key === "Escape") fechar();
@@ -1864,7 +1998,10 @@ function construirModalSuporte(conteudoHtml, logoUri) {
   // Sem display:flex aqui: o SUPORTE MODAL.html não tem regras de body e o
   // wrapper px-wrap cuida do layout (mesma lição da modal do PROX).
   corpo.style.cssText = "flex:1;overflow:auto;min-height:0;background:#0a1224;";
-  corpo.innerHTML = conteudoHtml;
+  // Shadow DOM: conteúdo isolado (CSS da página não entra, o da modal não sai)
+  corpo.innerHTML = "";
+  var sombraSuporte = corpo.attachShadow({ mode: "open" });
+  sombraSuporte.innerHTML = conteudoHtml;
 
   function aoTeclar(e) {
     if (e.key === "Escape") fechar();
@@ -1983,7 +2120,10 @@ function construirModalSugestoes(conteudoHtml, logoUri) {
   // Sem display:flex aqui: o SUGESTOES MODAL.html não tem regras de body e o
   // wrapper sg-wrap cuida do layout (mesma lição das outras modais).
   corpo.style.cssText = "flex:1;overflow:auto;min-height:0;background:#0a1224;";
-  corpo.innerHTML = conteudoHtml;
+  // Shadow DOM: conteúdo isolado (CSS da página não entra, o da modal não sai)
+  corpo.innerHTML = "";
+  var sombraSugestoes = corpo.attachShadow({ mode: "open" });
+  sombraSugestoes.innerHTML = conteudoHtml;
 
   function aoTeclar(e) {
     if (e.key === "Escape") fechar();
@@ -2032,11 +2172,82 @@ async function mostrarModalSugestoesNaAba(tabId) {
   }
 }
 
+// ==========================================
+// ÁREA DO ADMIN — verificação da senha no service worker
+// ==========================================
+// A senha do proprietário NUNCA aparece no código: aqui só mora o resultado
+// do PBKDF2-SHA256 (sal fixo + 250 mil iterações). Quem digita a senha na UI
+// ganha um token temporário no storage; a área do suporte (abrir painel,
+// ler/gravar instância e grupo) só responde com token válido. 5 senhas erradas
+// bloqueiam a entrada por 3 minutos — e o bloqueio é PERSISTENTE no storage,
+// então fechar e reabrir a tela não zera as tentativas.
+const ADMIN_SAL = "ccTools-admin-salt-v1";
+const ADMIN_ITERACOES = 250000;
+const ADMIN_HASH = "27720c43fb1b07926f1727da219aed891770286f3740698d87b67cd9899ef3f0";
+const ADMIN_BLOQUEIO_KEY = "ccTools_adminBloqueio";
+const ADMIN_TOKEN_KEY = "ccTools_adminToken";
+const ADMIN_TOKEN_TTL_MS = 8 * 60 * 60 * 1000; // uma jornada de trabalho
+const ADMIN_MAX_TENTATIVAS = 5;
+const ADMIN_BLOQUEIO_MS = 180000; // 3 minutos
+
+async function adminDerivarHash(senha) {
+  const enc = new TextEncoder();
+  const chave = await crypto.subtle.importKey("raw", enc.encode(senha), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt: enc.encode(ADMIN_SAL), iterations: ADMIN_ITERACOES, hash: "SHA-256" },
+    chave, 256);
+  return Array.from(new Uint8Array(bits)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function adminValidarSenha(senha) {
+  const agora = Date.now();
+  const st = (await chrome.storage.local.get([ADMIN_BLOQUEIO_KEY]))[ADMIN_BLOQUEIO_KEY] || {};
+  if (typeof st.bloqueadoAte === "number" && agora < st.bloqueadoAte) {
+    return { ok: false, bloqueado: true, aguarde: Math.ceil((st.bloqueadoAte - agora) / 1000) };
+  }
+  const valor = typeof senha === "string" ? senha.slice(0, 64) : "";
+  const hash = valor ? await adminDerivarHash(valor) : "";
+  if (!valor || hash !== ADMIN_HASH) {
+    const tentativas = (typeof st.tentativas === "number" ? st.tentativas : 0) + 1;
+    const novo = { tentativas: tentativas, bloqueadoAte: 0 };
+    if (tentativas >= ADMIN_MAX_TENTATIVAS) {
+      novo.tentativas = 0;
+      novo.bloqueadoAte = agora + ADMIN_BLOQUEIO_MS;
+    }
+    await chrome.storage.local.set({ [ADMIN_BLOQUEIO_KEY]: novo });
+    return {
+      ok: false,
+      senhaIncorreta: true,
+      bloqueado: !!novo.bloqueadoAte,
+      aguarde: novo.bloqueadoAte ? Math.ceil(ADMIN_BLOQUEIO_MS / 1000) : undefined,
+      restantes: Math.max(0, ADMIN_MAX_TENTATIVAS - novo.tentativas)
+    };
+  }
+  await chrome.storage.local.remove([ADMIN_BLOQUEIO_KEY]);
+  let token;
+  try {
+    token = crypto.randomUUID();
+  } catch (e) {
+    token = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+  await chrome.storage.local.set({ [ADMIN_TOKEN_KEY]: { token: token, ate: agora + ADMIN_TOKEN_TTL_MS } });
+  return { ok: true, token: token };
+}
+
+async function adminTemToken() {
+  try {
+    const st = (await chrome.storage.local.get([ADMIN_TOKEN_KEY]))[ADMIN_TOKEN_KEY];
+    return !!(st && typeof st.token === "string" && typeof st.ate === "number" && Date.now() < st.ate);
+  } catch (e) {
+    return false;
+  }
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || typeof message.type !== "string") return false;
   // Só a própria extensão pode pedir config/instância/chave: recusa
   // mensagens de abas ou de frames que não venham dela mesma.
-  if (!sender || sender.id !== chrome.runtime.id) return false;
+  if (!ehRemetenteProprio(sender)) return false;
   const t = message.type;
   const ehProx = t === "mostrarModalProx" || t === "proxLerConfig" || t === "proxSalvarConfig" ||
     t === "proxEstado" || t === "proxQR" || t === "proxGrupos" || t === "proxSelecionar" ||
@@ -2044,12 +2255,42 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const ehSuporte = t === "mostrarModalSuporte" || t === "suporteLerConfig" || t === "suporteEstado" ||
     t === "suporteQR" || t === "suporteGrupos" || t === "suporteSelecionar" || t === "suporteDesconectar";
   const ehSugestoes = t === "mostrarModalSugestoes";
-  if (!ehProx && !ehSuporte && !ehSugestoes) return false;
+  const ehAdmin = t === "adminValidarSenha" || t === "adminTemSessao" || t === "adminSair";
+  if (!ehProx && !ehSuporte && !ehSugestoes && !ehAdmin) return false;
 
   (async () => {
     try {
+      if (ehAdmin) {
+        // Verificação roda SÓ aqui no fundo: a senha nunca volta para a UI,
+        // e o bloqueio por tentativas fica gravado no storage do navegador.
+        if (t === "adminValidarSenha") return await adminValidarSenha(message.senha);
+        if (t === "adminTemSessao") {
+          // A tela de snippets pergunta se ainda há sessão (token de 8h) para
+          // restaurar o modo admin depois de um F5 sem pedir a senha de novo.
+          const st = (await chrome.storage.local.get([ADMIN_TOKEN_KEY]))[ADMIN_TOKEN_KEY];
+          const valido = !!(st && typeof st.token === "string" && typeof st.ate === "number" && Date.now() < st.ate);
+          return {
+            ok: true,
+            ativo: valido,
+            restanteMin: valido ? Math.ceil((st.ate - Date.now()) / 60000) : 0
+          };
+        }
+        if (t === "adminSair") {
+          // "Sair do admin" da tela de snippets: encerra a sessão para todas
+          // as telas que usam o mesmo token (sugestões/suporte).
+          await chrome.storage.local.remove([ADMIN_TOKEN_KEY]);
+          return { ok: true };
+        }
+      }
+      if (ehSuporte) {
+        // Toda a área do suporte (abrir o painel, ler/gravar instância e
+        // grupo do time) exige o token emitido há pouco pela senha certa.
+        if (!(await adminTemToken())) {
+          return { ok: false, sessaoExpirada: true, error: "Sessão do admin expirou — entre na área do admin novamente." };
+        }
+      }
       if (t === "mostrarModalProx") {
-        const tabId = message.tabId != null ? message.tabId : (sender.tab && sender.tab.id);
+        const tabId = typeof message.tabId === "number" ? message.tabId : (sender.tab && sender.tab.id);
         return await mostrarModalProxNaAba(tabId);
       }
       if (t === "proxLerConfig") {
@@ -2059,8 +2300,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           temChave: !!cfg.apikey,
           temManual: cfg.temManual,
           temPadrao: cfg.temPadrao,
-          // A chave embutida no pacote NUNCA sai daqui: só a chave manual
-          // digitada volta (para a modal pré-preencher o campo de edição).
+          // Só a chave manual digitada volta para a UI (a do pacote, se
+          // existir em instalações antigas, fica só no background).
           apikey: cfg.temManual ? (cfg.apikey || "") : "",
           instancia: cfg.instancia,
           grupoId: cfg.grupoId,
@@ -2084,7 +2325,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (t === "proxDesconectar") return await proxDesconectar();
       if (t === "proxAcao") return await proxAcao();
       if (t === "mostrarModalSuporte") {
-        const tabId = message.tabId != null ? message.tabId : (sender.tab && sender.tab.id);
+        const tabId = typeof message.tabId === "number" ? message.tabId : (sender.tab && sender.tab.id);
         return await mostrarModalSuporteNaAba(tabId);
       }
       if (t === "suporteLerConfig") {
@@ -2111,7 +2352,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
       if (t === "suporteDesconectar") return await suporteDesconectar();
       if (t === "mostrarModalSugestoes") {
-        const tabId = message.tabId != null ? message.tabId : (sender.tab && sender.tab.id);
+        const tabId = typeof message.tabId === "number" ? message.tabId : (sender.tab && sender.tab.id);
         return await mostrarModalSugestoesNaAba(tabId);
       }
       return { ok: false, error: "Ação desconhecida." };

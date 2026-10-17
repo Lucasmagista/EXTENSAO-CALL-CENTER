@@ -2,18 +2,18 @@
 
 Extensão do Google Chrome (Manifest V3) criada para agilizar o dia a dia de quem trabalha em call center: atalhos de digitação, snippets com áudio, relatos prontos, configuração de ramal e muito mais — tudo dentro do WhatsApp Web, Rocket.Chat e demais sites da Oquei.
 
-> Criado por **Mometto** e **Diogo — [Magista](https://www.magista.dev/)**
+> Criado por **[Mometto](https://github.com/lv777x)** e **[Diogo](https://github.com/PaulaoMecanicas11)** — [Magista](https://www.magista.dev/)
 
 ## Funcionalidades
 
 ### 🧩 Botão flutuante
-Um botão com a logo da extensão (arrastável, posição salva) que abre o painel de ferramentas em qualquer site liberado.
+Um botão com o ícone da extensão (`assets/alares-icon.webp`, arrastável, posição salva) que abre o painel de ferramentas em qualquer site liberado.
 
 ### 📐 Barra lateral injetada
-Alternativa ao botão flutuante: um rail fixo com a logo que abre um painel deslizante com todas as ferramentas — no estilo WA Web Plus. Pode ser usada sozinha ou junto do botão flutuante.
+Alternativa ao botão flutuante: um rail fixo com o mesmo ícone que abre um painel deslizante com todas as ferramentas — no estilo WA Web Plus. Pode ser usada sozinha ou junto do botão flutuante.
 
 ### 🔀 Modo por site
-Cada site pode ter a forma de acesso própria (Flutuante, Barra lateral ou Ambos), sem afetar os outros. Configurável em ⚙️ no popup.
+Cada site pode ter a forma de acesso própria (Flutuante, Barra lateral, Ambos ou **Sem botão** — aí a extensão é usada só pelo ícone fixado no Chrome e o atalho Alt+X), sem afetar os outros. Configurável em ⚙️ no popup.
 
 ### 📝 Snippets
 - Frases prontas com atalho, inseridas com um clique ou pelo teclado.
@@ -63,8 +63,8 @@ _Publicação em preparação._ Depois de publicada, a extensão atualiza automa
 | `popup.html` / `popup.js` | Janela da extensão (principal + configurações) |
 | `styles.css` | Design system compartilhado |
 | `ferramentas-comuns.js` | Ações, modos e posicionamento compartilhados |
-| `botao-flutuante.js` / `.css` | Botão 🧩 arrastável |
-| `barra-lateral.js` / `.css` | Rail + painel deslizante |
+| `botao-flutuante.js` / `.css` | Botão arrastável (GIF Bonzi Buddy) |
+| `barra-lateral.js` / `.css` | Rail + painel deslizante (mesmo GIF) |
 | `snippets.html` / `snippets.js` | Gerenciador de snippets |
 | `snippets-content.js` | Injeção de snippets nas páginas |
 | `quickreply.js` | Mensagens rápidas do WhatsApp Web |
@@ -98,7 +98,7 @@ Incrementa a `version` no `manifest.json` antes de publicar ou zipar.
 
 ## Segurança
 
-Esta extensão **não baixa nem executa código de fora do pacote publicado**. As requisições de rede são só de **dados**: (1) a **lista padrão de snippets** (JSON) do repositório oficial `Lucasmagista/EXTENSAO-CALL-CENTER`, com fallback para a cópia embutida, e (2) as chamadas REST da **Evolution API** em `whatsapp.hubly.software` usadas pelo botão **Enviar PROX** e pelo botão **Sugestões** (instância, QR Code, grupos e envio), apenas quando você usa o botão. A API Key do servidor vem embutida no pacote em `assets/prox-servidor.json` (arquivo local, gitignorado — fora do repositório público). Os dados do usuário ficam apenas no `chrome.storage.local`. Veja [SECURITY.md](SECURITY.md) e [privacidade.html](privacidade.html).
+Esta extensão **não baixa nem executa código de fora do pacote publicado**. As requisições de rede são só de **dados**: (1) a **lista padrão de snippets** (JSON) do repositório oficial `Lucasmagista/EXTENSAO-CALL-CENTER`, com fallback para a cópia embutida, (2) o **arquivo de configuração de suporte** `assets/suporte-config.json` do mesmo repositório (grupo de destino das sugestões e instância `sug-xxxxx` do suporte escolhidos pelo admin — dados, sem chave, mesma sincronização de 60 minutos; nas máquinas sem suporte local as sugestões saem pela instância do admin), e (3) as chamadas REST da **Evolution API** em `whatsapp.hubly.software` usadas pelo botão **Enviar PROX** e pelo botão **Sugestões** (instância, QR Code, grupos e envio), apenas quando você usa o botão. A **API Key vem embutida** no arquivo local `assets/prox-servidor.json` (gitignorado — fora do repositório) para a instalação já funcionar, ou é digitada em "Alterar API Key"; em qualquer caso ela fica só no `chrome.storage.local`. Os dados do usuário ficam apenas no `chrome.storage.local`. Veja [SECURITY.md](SECURITY.md) e [privacidade.html](privacidade.html).
 
 ## Licença
 
@@ -106,5 +106,6 @@ Esta extensão **não baixa nem executa código de fora do pacote publicado**. A
 
 ## Contato
 
-- Issues: [github.com/Lucasmagista/EXTENSAO-CALL-CENTER/issues](https://github.com/Lucasmagista/EXTENSAO-CALL-CENTER/issues)
-- Criadores: Mometto e Diogo — [Magista](https://www.magista.dev/)
+- Issues: [github.com/Lucasmagista](https://github.com/Lucasmagista)
+- Criadores: [Mometto](https://github.com/lv777x) e [Diogo](https://github.com/PaulaoMecanicas11) — [Magista](https://www.magista.dev/)
+- Chrome Web Store: [CallCenter - TOOLS](https://chromewebstore.google.com/detail/callcenter-tools/acgdpiahfakpindcloiopmelfihkiefa)

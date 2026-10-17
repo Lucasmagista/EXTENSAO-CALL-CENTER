@@ -7,11 +7,18 @@
 (function () {
   "use strict";
 
-  var SENHA_ADMIN = [48,53,49,50,49,56,101,115,115].map(function (c) { return String.fromCharCode(c); }).join("");
   var statusTimer = null;
   var emailConfirmado = false; // precisa confirmar antes de enviar com email
+  var adminVerificando = false; // um "Entrar" por vez
 
-  function $(id) { return document.getElementById(id); }
+  // O conteúdo da modal mora dentro de um Shadow DOM: procura primeiro no
+  // documento (host) e depois dentro da sombra do corpo.
+  function $(id) {
+    var direto = document.getElementById(id);
+    if (direto) return direto;
+    var corpo = document.getElementById("cc-sugestoes-corpo");
+    return (corpo && corpo.shadowRoot) ? corpo.shadowRoot.getElementById(id) : null;
+  }
   function setText(id, txt) { var el = $(id); if (el) el.textContent = txt; }
 
   function mostrarStatus(msg, classe) {
@@ -155,46 +162,53 @@
   }
 
   // =====================================================
-  // Área do admin: senha abre a modal do WhatsApp do Suporte
-  // (na mesma aba — o background usa sender.tab.id)
+  // Área do admin: a senha é verificada NO FUNDO da extensão (PBKDF2 + o
+  // bloqueio por tentativas é persistente); aqui só chega o resultado. Com
+  // a senha certa o fundo emite um token e libera a modal do suporte.
   // =====================================================
   function adminMostrar(msg) {
     setText("sg-admin-status", msg || "");
   }
 
-  // Blindagem: 5 senhas erradas bloqueiam a caixa por 3 minutos.
-  var adminTentativas = 0;
-  var adminBloqueadoAte = 0;
-
   function adminEntrar() {
-    if (Date.now() < adminBloqueadoAte) {
-      adminMostrar("Muitas tentativas — tente em " +
-        Math.ceil((adminBloqueadoAte - Date.now()) / 1000) + "s.");
-      return;
-    }
+    if (adminVerificando) return;
     var valor = ($("sg-admin-senha").value || "").trim();
-    if (valor !== SENHA_ADMIN) {
-      adminTentativas++;
-      $("sg-admin-senha").value = "";
-      if (adminTentativas >= 5) {
-        adminTentativas = 0;
-        adminBloqueadoAte = Date.now() + 180000;
-        adminMostrar("Muitas tentativas erradas — bloqueado por 3 minutos.");
-      } else {
-        adminMostrar("Senha incorreta (" + adminTentativas + "/5).");
-      }
-      $("sg-admin-senha").focus();
+    if (!valor) {
+      adminMostrar("Digite a senha.");
       return;
     }
-    adminTentativas = 0;
-    $("sg-admin-senha").value = "";
-    adminMostrar("Abrindo a configuração do suporte…");
-    enviar({ type: "mostrarModalSuporte" }).then(function (resp) {
-      if (!resp || !resp.ok) {
-        adminMostrar((resp && resp.error) || "Abra o WhatsApp Web ou o chat da empresa.");
+    adminVerificando = true;
+    adminMostrar("Verificando…");
+    enviar({ type: "adminValidarSenha", senha: valor }).then(function (resp) {
+      adminVerificando = false;
+      $("sg-admin-senha").value = "";
+      if (!resp) {
+        adminMostrar("Não foi possível verificar — tente de novo.");
         return;
       }
-      // a modal do suporte substitui esta na mesma página
+      if (resp.bloqueado) {
+        adminMostrar("Muitas tentativas erradas — bloqueado por " + (resp.aguarde || 180) + "s.");
+        return;
+      }
+      if (!resp.ok) {
+        if (resp.senhaIncorreta) {
+          adminMostrar(resp.restantes > 0
+            ? "Senha incorreta (" + (5 - resp.restantes) + "/5)."
+            : "Senha incorreta.");
+        } else {
+          adminMostrar(resp.error || "Senha incorreta.");
+        }
+        $("sg-admin-senha").focus();
+        return;
+      }
+      adminMostrar("Abrindo a configuração do suporte…");
+      enviar({ type: "mostrarModalSuporte" }).then(function (r2) {
+        if (!r2 || !r2.ok) {
+          adminMostrar((r2 && r2.error) || "Abra o WhatsApp Web ou o chat da empresa.");
+          return;
+        }
+        // a modal do suporte substitui esta na mesma página
+      });
     });
   }
 

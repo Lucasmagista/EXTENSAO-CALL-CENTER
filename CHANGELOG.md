@@ -5,6 +5,51 @@ O formato segue o padrão [Keep a Changelog](https://keepachangelog.com/pt-BR/1.
 
 ---
 
+## [1.25] — 2026-10-17
+
+### Adicionado
+- **Botão "SOBRE A EXTENSÃO" na popup**: logo abaixo do status do site ("Snippets ativos neste site") e acima da logo da Alares, um link dedicado abre a página inicial do site institucional (`https://lucasmagista.github.io/EXTENSAO-CALL-CENTER/`) em nova aba.
+- **Página de Novidades resumida**: o changelog do site agora lista **só o título em negrito** de cada item (com um resumo curto quando o item não tem título) — o `CHANGELOG.md` continua sendo o histórico completo e a fonte geradora. Itens ligados ao site ficam de fora da página (marcados com `<!--site-->` aqui). <!--site-->
+- **Personalização (admin) em modal**: o "Editar botões da tela principal" agora abre **sobreposto à janela** — cartão com cabeçalho, botão ✕, clique no fundo ou **Esc** para fechar — em vez de trocar a tela; mesma senha e mesma sessão de 8h.
+
+### Alterado
+- **Site: instalação direta na Chrome Web Store**: o botão **Instalar** do topo (todas as páginas) e a banda final do site abrem a página oficial da loja (`chromewebstore.google.com/detail/callcenter-tools/acgdpiahfakpindcloiopmelfihkiefa`); o **Instalar agora** do hero leva à página de Instalação (que leva à loja), e a página de Instalação ganhou o CTA principal da loja, mantendo o passo a passo manual como alternativa. <!--site-->
+- **Site: ícones Lucide em todos os cards**: os emojis (📤 💬 📝 💡 🧩 🔔 📶 ⚙️ 🔒 📄 🐞 📦 📖 ⚡ e o ☰ do menu) foram substituídos por SVGs inline da biblioteca Lucide, com hover animado — visual de traço uniforme em todas as páginas. <!--site-->
+- **Links do GitHub do site para o perfil**: como o repositório é privado, o botão **GitHub** (topo e rodapé), **Abrir uma issue** e **Ver no GitHub** agora levam para `github.com/Lucasmagista` em vez do repositório. <!--site-->
+- **Créditos de Mometto e Diogo com GitHub**: em todos os rodapés e créditos (site, popup, snippets, barra lateral, README, segurança e conduta) os nomes passaram a linker os perfis `github.com/lv777x` (Mometto) e `github.com/PaulaoMecanicas11` (Diogo).
+- **Documentação alinhada ao repositório privado**: textos do README, segurança, privacidade, `.gitignore` e comentários do código deixam de citar o repositório como público; os links de código/issue/contato já apontavam para o perfil. <!--site-->
+
+---
+
+## [1.24] — 2026-10-16
+
+### Adicionado
+- **Painel do admin para customizar os botões da popup (tela principal)**: em ⚙️ → "Personalização (admin)" → **Editar botões da tela principal**, o administrador (senha do time) abre uma tela dedicada para **reordenar (↑/↓), ocultar/mostrar, renomear, trocar o ícone e a função de cada botão** da janela da extensão — incluindo o **Enviar PROX** (pode ser ocultado). Também é possível **criar botões novos** (link direto para qualquer site https) e **novos submenus** (como o "Links", com itens nome+link próprios, adicionáveis/editáveis/reordenáveis). O submenu **Links** e os botões de função embutida (Enviar, Relatos/Mensagens, Configurar x6, Senha Wi-Fi, Snippets, Sugestões) continuam disponíveis — os fixos não podem ser apagados, só ocultados. As mudanças são salvas no `chrome.storage` local (por navegador) e valem na hora, na própria popup; há **Restaurar botões padrão** e **Sair do admin**. A senha é verificada no fundo (mesmo mecanismo das outras áreas admin) e a sessão expira sozinha.
+- **Snippets: "Sair do admin" + modo admin que não perde no F5**: a área do administrador ganhou o botão **Sair do admin** (logo acima do campo da senha) para encerrar a sessão e voltar ao modo operadora; e a sessão agora **persiste ao atualizar a tela** — o fundo já guardava um token de 8h, e a tela de snippets passa a consultá-lo (`adminTemSessao`) e restaurar o modo admin sem pedir a senha de novo (expira → volta a pedir).
+- **Propagação da configuração do suporte para o time inteiro (grupo E WhatsApp)**: o que o admin escolhe/conecta na modal "WhatsApp do Suporte" — **grupo, nome e a instância `sug-xxxxx` conectada** — pode ser publicado em `assets/suporte-config.json` do repositório. Na própria modal há o botão **"Copiar config para o time"**, que copia o JSON pronto; um commit desse arquivo e **toda a equipe recebe na sincronização automática de 60 minutos** (com cache de 30 minutos e fallback embutido). Nas máquinas **sem suporte local** (operadoras), `enviarSugestao` passa a enviar **pela instância do suporte que o admin escaneou** — a sugestão chega ao grupo pelo mesmo WhatsApp, sem cada operadora configurar ou escanear QR. A máquina do admin (suporte local) sempre vence a propagação; mudar destino continua **só com a senha do admin**. O arquivo é **dado, sem chave** (a instância é só identificador; sem a API Key ninguém usa).
+- **Token de sessão para a área do suporte**: além da senha, o fundo emite um token de 8 horas; abrir a modal do suporte, ler/gravar instância e grupo do suporte exigem esse token (expira → aviso "Sessão do admin expirou — entre na área do admin novamente." para digitar de novo).
+- **Modo "Sem botão" (usar só o ícone do Chrome)**: quarta opção em ⚙️ → Forma de acesso — **Flutuante | Barra lateral | Ambos | Sem botão** (e no seletor por site: "Sem botão"). Com ela, nenhum botão é injetado na página: a pessoa usa apenas a extensão **fixada na barra do Chrome** (e o atalho **Alt+X**). Quem estiver com o flutuante ou a barra ativos também pode desligar na hora pelo próprio menu ("Desativar na página"); para voltar, é só escolher um modo de novo na popup.
+- **Site institucional no GitHub Pages (pasta `docs/`)**: página principal sobre a extensão + subpáginas **Recursos**, **Instalação**, **Novidades** (histórico gerado automaticamente a partir do `CHANGELOG.md`), **Privacidade** e **Contato**, todas em pt-BR, com visual editorial completo: fundo creme + zona escura, acento verde neon, tipografia Unbounded/Geist + detalhes pixel, **gem 3D girando no hero** com watermark gigante, marquee de recursos, mockup de celular com screenshot real da popup, sidebar de navegação nas subpáginas, crop marks de viewport, cursor tracking e reveal on scroll. Menu responsivo com hambúrguer no mobile. Para publicar: no repositório → *Settings → Pages → Deploy from a branch* → pasta `/docs` no branch `main` (o endereço fica `lucasmagista.github.io/EXTENSAO-CALL-CENTER/`). O histórico de versões se regenera a cada mudança no `CHANGELOG.md`. <!--site-->
+
+### Alterado
+- **Ícone dos botões de acesso**: o botão flutuante e o rail da barra lateral agora exibem o **`assets/alares-icon.webp`** no lugar da logo antiga (recurso liberado no manifest junto da logo, que continua nas modais).
+- **Chave do PROX pronta no pacote (sem depender de arquivo perfeito)**: o `assets/prox-servidor.json` oficial volta a trazer a **API Key embutida** — instalação segue indo direto ao QR sem digitar nada —, mantendo o arquivo **gitignorado** (o git e o repositório público nunca contêm a chave; só o ZIP de instalação a distribui). Por robustez, o fundo agora **aceita também o arquivo sem `apikey`**: quem receber o pacote "pelado" digita em "Alterar API Key" e nada quebra. Em qualquer caso a chave é devolvida nas respostas **apenas quando digitada manualmente** e vive só no `chrome.storage.local`.
+- **Senha do admin verificada só no fundo (service worker)**: as telas (Snippets e Sugestões) não guardam mais senha nenhuma — enviam `adminValidarSenha` e o fundo valida com **PBKDF2-SHA256 (250.000 iterações, salt próprio)**; o HTML/JS da interface recebe só um token temporário. **5 senhas erradas bloqueiam por 3 minutos de forma persistente** (o bloqueio fica salvo e não zera ao fechar a tela). A senha exigida continua a mesma.
+- **Só HTTPS para sites extras**: `optional_host_permissions` reduzido a `https://*/*` e a popup **recusa sites sem HTTPS** com o aviso "Sites sem HTTPS não são liberados — snippets só em sites seguros.".
+- **Modais do PROX, Suporte e Sugestões com Shadow DOM**: o conteúdo (HTML + CSS `px-`/`sg-`) passa a montar dentro de uma sombra (`attachShadow`) — CSS/JS da página não entra e o CSS da modal não vaza para fora; os helpers de busca/etapas foram escopados para a sombra. A moldura da senha Wi-Fi x6 fica como está (CSS prefixado), por ser um frame simples já isolado.
+- **Todos os listeners do service worker com a mesma validação**: mensagem só da própria extensão (`sender.id`), tipo conhecido, textos aparados na entrada (`msgTexto`), sites validados como `https://host` (`msgOrigemSite`) e `tabId` só numérico — incluindo runFlow (grupo 200, mensagem 4000, tag 30), sites de snippet, usuário e mensagens.
+
+### Security
+- **Política de privacidade fiel** (`privacidade.html` reescrita): sem promessa absoluta de "nada sai do computador" — descreve o que é armazenado localmente, os **três tipos de requisição** (JSON de dados do GitHub — snippets e config de suporte — e chamadas da Evolution API para PROX/Sugestões) e as permissões, com o formulário de Sugestões declarado como indo ao **grupo de suporte escolhido pelo admin**.
+- **Sanitização estrutural da UI injetada** (Shadow DOM acima) + escape de HTML já existente reforçado nos textos que entram nos painéis.
+- Escopo de rede mínimo: permissão opcional de site só `https://*/*` (http não é mais sequer solicitável).
+- Verificações de envio (`ehRemetenteProprio`, `msgTexto`, `msgOrigemSite`) aplicadas de forma **uniforme a todos os cinco listeners** de mensagem do fundo.
+
+### Corrigido
+- **Conflito de merge não resolvido no `README.md`**: marcadores `<<<<<<<`/`=======`/`>>>>>>>` estavam no rodapé (seção "Contato") — resolvidos mantendo os links oficiais do repositório, o crédito com link do Magista e o link da Chrome Web Store.
+
+---
+
 ## [1.22] — 2026-10-16
 
 ### Adicionado
@@ -236,6 +281,7 @@ Versão original da extensão (disponível em `teste-tropa-do-leleo/TESTE TROPA 
 - Atalhos de teclado `Alt+P` e `Alt+L`.
 - Content script injetado em `<all_urls>` (posteriormente restringido na 1.11).
 
+[1.24]: https://github.com/Lucasmagista/EXTENSAO-CALL-CENTER/commits/main
 [1.22]: https://github.com/Lucasmagista/EXTENSAO-CALL-CENTER/commits/main
 [1.21]: https://github.com/Lucasmagista/EXTENSAO-CALL-CENTER/commits/main
 [1.20]: https://github.com/Lucasmagista/EXTENSAO-CALL-CENTER/commits/main

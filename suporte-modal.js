@@ -23,7 +23,18 @@
   var listaAberta = true; // false = grupo fixo no card, lista recolhida
   var statusTimer = null;
 
-  function $(id) { return document.getElementById(id); }
+  // O conteúdo da modal mora dentro de um Shadow DOM (corpo isolado do site):
+  // procura primeiro no documento (cabeçalho/host) e depois dentro da sombra.
+  function $(id) {
+    var direto = document.getElementById(id);
+    if (direto) return direto;
+    var corpo = document.getElementById("cc-suporte-corpo");
+    return (corpo && corpo.shadowRoot) ? corpo.shadowRoot.getElementById(id) : null;
+  }
+  function raizConteudo() {
+    var corpo = document.getElementById("cc-suporte-corpo");
+    return (corpo && corpo.shadowRoot) ? corpo.shadowRoot : document;
+  }
   function modalViva() { return !!document.getElementById("cc-suporte-modal"); }
   function setText(id, txt) { var el = $(id); if (el) el.textContent = txt; }
 
@@ -35,7 +46,13 @@
             resolve({ ok: false, error: chrome.runtime.lastError.message });
             return;
           }
-          resolve(resp || { ok: false, error: "Sem resposta do fundo da extensão." });
+          var r = resp || { ok: false, error: "Sem resposta do fundo da extensão." };
+          // Token de admin venceu no meio do uso: avisa uma vez, no rodapé
+          // (o erro também segue para quem chamou).
+          if (r.sessaoExpirada) {
+            mostrarStatus(r.error || "Sessão do admin expirou — entre na área do admin novamente.", 9000);
+          }
+          resolve(r);
         });
       } catch (e) {
         resolve({ ok: false, error: e.message });
@@ -44,7 +61,7 @@
   }
 
   function mostrarEtapa(id) {
-    var etapas = document.querySelectorAll(".px-etapa");
+    var etapas = raizConteudo().querySelectorAll(".px-etapa");
     for (var i = 0; i < etapas.length; i++) etapas[i].classList.remove("ativa");
     var alvo = $(id);
     if (alvo) alvo.classList.add("ativa");
@@ -207,6 +224,37 @@
     if (card) card.classList.toggle("px-tem-grupo", temGrupo);
     var trocar = $("px-btn-trocar");
     if (trocar) trocar.classList.toggle("oculto", !(temGrupo && !listaAberta));
+    // Só dá para propagar a escolha pro time quando existe um grupo escolhido
+    var propagar = $("px-btn-propagar");
+    if (propagar) propagar.classList.toggle("oculto", !temGrupo);
+  }
+
+  // Copia o JSON da config do suporte pronto para o mantenedor publicar em
+  // assets/suporte-config.json (repositório) — assim a escolha do grupo E a
+  // instância conectada aqui saem daqui e chegam em todos os navegadores na
+  // sincronização de 60 minutos (as sugestões do time inteiro passam a sair
+  // por este WhatsApp do suporte).
+  function propagarConfig() {
+    if (!cfg.grupoId) {
+      mostrarStatus("Escolha o grupo antes de copiar a configuração.");
+      return;
+    }
+    var json = JSON.stringify({
+      grupoSuporte: cfg.grupoId,
+      grupoNome: cfg.grupoNome || "",
+      instancia: cfg.instancia || "",
+      atualizadoEm: new Date().toISOString().slice(0, 10)
+    }, null, 2);
+    var aviso = "Config copiada! Cole em assets/suporte-config.json do repositório e publique — o time recebe em até 60 minutos e as sugestões saem por este WhatsApp.";
+    var colarNoPrompt = function () {
+      window.prompt("Copie a config abaixo e cole em assets/suporte-config.json do repositório:", json);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(json).then(function () { mostrarStatus(aviso, 12000); })
+        .catch(colarNoPrompt);
+    } else {
+      colarNoPrompt();
+    }
   }
 
   async function iniciarLive() {
@@ -423,6 +471,8 @@
       });
     }
     $("px-btn-desconectar").addEventListener("click", desconectar);
+    var btnPropagar = $("px-btn-propagar");
+    if (btnPropagar) btnPropagar.addEventListener("click", propagarConfig);
     // Tela já é do admin (senha na popup): o link de chave aparece direto.
     var btnChave = $("px-btn-editar-chave");
     if (btnChave) {
@@ -433,7 +483,7 @@
 
   async function iniciar() {
     if (!modalViva()) return; // modal não está no DOM
-    if (!document.getElementById("px-etapa-chave")) return;
+    if (!$("px-etapa-chave")) return;
     ligar();
     await recarregarConfig();
     if (!modalViva()) return;

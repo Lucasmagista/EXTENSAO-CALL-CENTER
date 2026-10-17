@@ -26,7 +26,9 @@
       void chrome.runtime.lastError;
       avisar(mostrarStatus, modo === "lateral"
         ? "Barra lateral ativada (padrão)."
-        : "Botão flutuante ativado (padrão).");
+        : modo === "nenhum"
+          ? "Sem botão na página — use o ícone do Chrome (e o atalho Alt+X)."
+          : "Botão flutuante ativado (padrão).");
     });
   }
 
@@ -103,6 +105,10 @@
       }
       if (acao === "modo-lateral") {
         definirModo("lateral", mostrarStatus);
+        return;
+      }
+      if (acao === "modo-nenhum") {
+        definirModo("nenhum", mostrarStatus);
       }
     } catch (e) {
       avisar(mostrarStatus, "Erro: " + e.message);
@@ -116,15 +122,16 @@
 
   // ==========================================
   // Modo de acesso por site
-  // "flutuante" | "lateral" | "ambos"
+  // "flutuante" | "lateral" | "ambos" | "nenhum"
+  // "nenhum" = nenhum botão injetado na página (só o ícone do Chrome)
   // Config: { padrao: "...", porSite: { "<origem>": "..." } }
   // ==========================================
   function modoEfetivo(cfg, origem) {
     var padrao = cfg && cfg.padrao;
-    if (padrao !== "lateral" && padrao !== "ambos") padrao = "flutuante";
+    if (padrao !== "lateral" && padrao !== "ambos" && padrao !== "nenhum") padrao = "flutuante";
     var porSite = (cfg && cfg.porSite) || {};
     var m = porSite[origem];
-    if (m === "flutuante" || m === "lateral" || m === "ambos") return m;
+    if (m === "flutuante" || m === "lateral" || m === "ambos" || m === "nenhum") return m;
     return padrao;
   }
 

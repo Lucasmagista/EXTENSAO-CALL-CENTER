@@ -23,7 +23,18 @@
   var listaAberta = true; // false = grupo fixo no card, lista recolhida
   var statusTimer = null;
 
-  function $(id) { return document.getElementById(id); }
+  // O conteúdo da modal mora dentro de um Shadow DOM (corpo isolado do site):
+  // procura primeiro no documento (cabeçalho/host) e depois dentro da sombra.
+  function $(id) {
+    var direto = document.getElementById(id);
+    if (direto) return direto;
+    var corpo = document.getElementById("cc-prox-corpo");
+    return (corpo && corpo.shadowRoot) ? corpo.shadowRoot.getElementById(id) : null;
+  }
+  function raizConteudo() {
+    var corpo = document.getElementById("cc-prox-corpo");
+    return (corpo && corpo.shadowRoot) ? corpo.shadowRoot : document;
+  }
   function modalViva() { return !!document.getElementById("cc-prox-modal"); }
   function setText(id, txt) { var el = $(id); if (el) el.textContent = txt; }
 
@@ -44,7 +55,7 @@
   }
 
   function mostrarEtapa(id) {
-    var etapas = document.querySelectorAll(".px-etapa");
+    var etapas = raizConteudo().querySelectorAll(".px-etapa");
     for (var i = 0; i < etapas.length; i++) etapas[i].classList.remove("ativa");
     var alvo = $(id);
     if (alvo) alvo.classList.add("ativa");
@@ -461,13 +472,13 @@
     $("px-campo-texto").addEventListener("change", salvarTexto);
     var rodape = $("px-rodape");
     if (rodape) rodape.addEventListener("click", gestoProprietario);
-    var logo = document.getElementById("cc-prox-logo");
+    var logo = $("cc-prox-logo");
     if (logo) logo.addEventListener("click", gestoProprietario);
   }
 
   async function iniciar() {
     if (!modalViva()) return; // modal não está no DOM
-    if (!document.getElementById("px-etapa-chave")) return;
+    if (!$("px-etapa-chave")) return;
     ligar();
     await recarregarConfig();
     if (!modalViva()) return;

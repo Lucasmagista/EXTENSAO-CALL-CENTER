@@ -1,11 +1,10 @@
 const STORAGE_KEY = "ccTools_snippets";
 const IGNORADOS_KEY = "ccTools_padrao_ignorados";   // atalhos padrão que o administrador apagou (não voltam sozinhos)
 const STATUS_KEY = "ccTools_padrao_status";         // resultado da última aplicação da lista padrão
-const SENHA_ADMIN = [48,53,49,50,49,56,101,115,115].map(function (c) { return String.fromCharCode(c); }).join(""); // mesma senha do admin das sugestões (guardada em códigos)
 const NOVO_DIAS = 7;                                // selo "NOVO" do admin vira padrão depois destes dias
 
 let ignorados = [];
-let ehAdmin = false;                                // sessão da aba (não é gravado)
+let ehAdmin = false;          // modo admin — espelho local do token do fundo
 
 let snippets = [];   // { id, atalho, titulo, conteudo, audio, padrao, editadoPorAdmin?, novoAdmin?, criadoEm? }
 let ativoId = null;
@@ -455,50 +454,100 @@ $busca.addEventListener("input", () => { filtro = $busca.value; renderLista(); }
 const $adminSenha = document.getElementById("admin-senha");
 const $adminEntrar = document.getElementById("admin-entrar");
 const $adminStatus = document.getElementById("admin-status");
+const $adminSair = document.getElementById("admin-sair");
 
-// Blindagem contra tentativa em massa: 5 senhas erradas bloqueiam a caixa por
-// 3 minutos (só esta página — memória da sessão).
-let adminTentativas = 0;
-let adminBloqueadoAte = 0;
+// A senha é verificada NO FUNDO da extensão (PBKDF2 — nada de senha em
+// texto no código) e o bloqueio após 5 erros por 3 minutos é persistente
+// no storage, então fechar a tela não zera as tentativas.
+function enviarAdmin(msg) {
+  return new Promise((resolve) => {
+    try {
+      chrome.runtime.sendMessage(msg, (resp) => {
+        if (chrome.runtime.lastError) { resolve(null); return; }
+        resolve(resp || null);
+      });
+    } catch (e) {
+      resolve(null);
+    }
+  });
+}
 
-function entrarAdmin() {
-  if (Date.now() < adminBloqueadoAte) {
-    $adminStatus.className = "erro";
-    $adminStatus.textContent = "Muitas tentativas — tente em " +
-      Math.ceil((adminBloqueadoAte - Date.now()) / 1000) + "s.";
-    return;
-  }
+async function entrarAdmin() {
   const valor = $adminSenha.value.trim();
   if (!valor) {
     $adminStatus.className = "erro";
     $adminStatus.textContent = "Digite a senha.";
     return;
   }
-  if (valor !== SENHA_ADMIN) {
-    adminTentativas++;
-    $adminSenha.value = "";
-    if (adminTentativas >= 5) {
-      adminTentativas = 0;
-      adminBloqueadoAte = Date.now() + 180000;
-      $adminStatus.className = "erro";
-      $adminStatus.textContent = "Muitas tentativas erradas — área bloqueada por 3 minutos.";
-    } else {
-      $adminStatus.className = "erro";
-      $adminStatus.textContent = "Senha incorreta (" + adminTentativas + "/5).";
-    }
+  $adminEntrar.disabled = true;
+  $adminStatus.className = "";
+  $adminStatus.textContent = "Verificando…";
+  const resp = await enviarAdmin({ type: "adminValidarSenha", senha: valor });
+  $adminSenha.value = "";
+  $adminEntrar.disabled = false;
+  if (!resp) {
+    $adminStatus.className = "erro";
+    $adminStatus.textContent = "Não foi possível verificar — tente de novo.";
     return;
   }
-  adminTentativas = 0;
+  if (resp.bloqueado) {
+    $adminStatus.className = "erro";
+    $adminStatus.textContent = "Muitas tentativas erradas — bloqueado por " + (resp.aguarde || 180) + "s.";
+    return;
+  }
+  if (!resp.ok) {
+    $adminStatus.className = "erro";
+    if (resp.senhaIncorreta && resp.restantes > 0) {
+      $adminStatus.textContent = "Senha incorreta (" + (5 - resp.restantes) + "/5).";
+    } else {
+      $adminStatus.textContent = resp.error || "Senha incorreta.";
+    }
+    $adminSenha.focus();
+    return;
+  }
   ehAdmin = true;
-  $adminSenha.value = "";
   $adminSenha.disabled = true;
   $adminEntrar.disabled = true;
+  if ($adminSair) $adminSair.classList.add("visivel");
   $adminStatus.className = "ok";
   $adminStatus.textContent = "✓ Administrador ativo — você pode alterar/apagar os padrões e marcar novos como padrão.";
   if (ativoId) aplicarTravasEditor();
 }
 $adminEntrar.addEventListener("click", entrarAdmin);
 $adminSenha.addEventListener("keydown", (e) => { if (e.key === "Enter") entrarAdmin(); });
+
+// Encerra a sessão do admin no fundo (mesmo token das outras telas) e volta
+// a tela ao modo operadora — o botão fica logo acima do campo da senha.
+async function sairAdmin() {
+  const resp = await enviarAdmin({ type: "adminSair" });
+  ehAdmin = false;
+  $adminSenha.disabled = false;
+  $adminEntrar.disabled = false;
+  $adminSenha.value = "";
+  if ($adminSair) $adminSair.classList.remove("visivel");
+  $adminStatus.className = "";
+  $adminStatus.textContent = (resp && resp.ok)
+    ? "Sessão do admin encerrada."
+    : "Sessão encerrada nesta tela (não foi possível falar com a extensão).";
+  if (ativoId) aplicarTravasEditor();
+}
+if ($adminSair) $adminSair.addEventListener("click", sairAdmin);
+
+// Atualizar a tela (F5) NÃO perde o modo admin: o fundo guarda um token de
+// 8h e a tela só pergunta se a sessão ainda vale — se valer, entra direto.
+async function restaurarSessaoAdmin() {
+  const resp = await enviarAdmin({ type: "adminTemSessao" });
+  if (!resp || !resp.ok || !resp.ativo) return;
+  ehAdmin = true;
+  $adminSenha.disabled = true;
+  $adminEntrar.disabled = true;
+  if ($adminSair) $adminSair.classList.add("visivel");
+  $adminStatus.className = "ok";
+  $adminStatus.textContent = "✓ Administrador ativo — sessão restaurada" +
+    (resp.restanteMin > 0 ? " (vale por mais ~" + resp.restanteMin + " min)." : ".");
+  if (ativoId) aplicarTravasEditor();
+}
+restaurarSessaoAdmin();
 
 // ===== Importar / Exportar (modal única, .txt como formato principal) =====
 const $modalImpExp = document.getElementById("modalImpExp");
